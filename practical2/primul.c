@@ -3,6 +3,8 @@
 int ROTATE_90_TIME = 1210;
 int ROTATE_POWER = 25;
 int MOVE_POWER = 10;
+const int DISPLAY_SCALE = 10;
+
 const float K = 0.00036; // for distance in cm, and time in milliseconds
 const float ENCODINGS_PER_CM = 27.5;
 const float ENCODINGS_PER_DEGREE = 3;
@@ -146,18 +148,20 @@ task computePosition() {
 	}
 }
 
+task drawPosition() {
+	while (true) {
+		wait1Msec(10);
+		nxtSetPixel(15 + (int)(position.x),15 + (int)(position.y));
+	}
+}
 
-task main()
-{
-
+task main() {
 	position.x = 0;
 	position.y = 0;
 	position.angle = 0;
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
-
 	if (synch) {
-
 		nMotorPIDSpeedCtrl[motorC] = mtrSpeedReg;
 		nMotorPIDSpeedCtrl[motorB] = mtrSpeedReg;
 
@@ -167,7 +171,6 @@ task main()
 	}
   //move(25, 40);
   //moveForward40();
-  //rotate(90);
 
   //move_k(60, 2500);
 
@@ -176,12 +179,8 @@ task main()
  // moveForward40();
 
 	StartTask(computePosition);
-	//move(50, 40);
-	moveForward40();
-	//moveForward40();
-	printDebugStats();
+	StartTask(drawPosition);
 
-	return;
 
 	int i = 0;
 	int loops = 4;
@@ -192,4 +191,8 @@ task main()
 	  rotate(90);
 	  printDebugStats();
   }
+
+  StopTask(computePosition);
+  wait10Msec(6000); // wait 1MIN
+  StopTask(drawPosition);
 }
