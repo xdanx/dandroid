@@ -1,12 +1,33 @@
+
+/* constants */
 int ROTATE_90_TIME = 1210;
 int ROTATE_POWER = 25;
 int MOVE_POWER = 10;
-const float K = 0.00037; // for distance in cm, and time in milliseconds
+const float K = 0.00036; // for distance in cm, and time in milliseconds
+const float ENCODINGS_PER_CM = 27.5;
+const float ENCODINGS_PER_DEGREE = 3;
 
 int LEFT_WHEEL = motorA;
 int RIGHT_WHEEL = motorC;
 int GUN = motorB;
-bool synch = false;
+
+#define MOVE_STATE 0
+#define ROTATE_STATE 1
+/* end constants */
+
+// global vars
+bool synch = true;
+int robotState = MOVE_STATE;
+int leftEncodings = 0;
+int rightEncodings = 0;
+
+typedef struct {
+	float x;
+	float y;
+	float angle; // -pi < angle < pi, 0 when robot pointed towards x+
+} Position;
+
+Position position;
 
 
 void stop() {
@@ -23,6 +44,7 @@ float getMoveTime(float power, int distance) {
 }
 
 void move(int power, float distance) {
+	robotState = MOVE_STATE;
 	motor[LEFT_WHEEL] = power;
 	motor[RIGHT_WHEEL] = power;
 	float time = getMoveTime(power, distance);
@@ -31,6 +53,7 @@ void move(int power, float distance) {
 }
 
 void rotate(int degs) {
+	robotState = ROTATE_STATE;
 	int dir = 1;
 	if (degs < 0) {
 		dir = -1;
@@ -77,9 +100,8 @@ void move_k(int speed, int time)
 
 void clearDebugStats()
 {
-	nMotorEncoder[LEFT_WHEEL] = 0;
-	nMotorEncoder[RIGHT_WHEEL] = 0;
-
+	//nMotorEncoder[LEFT_WHEEL] = 0;
+	//nMotorEncoder[RIGHT_WHEEL] = 0;
 }
 
 void printDebugStats()
@@ -89,17 +111,55 @@ void printDebugStats()
 	clearDebugStats();
 }
 
+void addDistance(Position* p, float distance) {
+	p->x += distance * cosDegrees(p->angle);
+	p->y += distance * sinDegrees(p->angle);
+	return;
+}
+
+void addAngle(Position* p, float deltaAngle) {
+	const float upper = 180;
+	const float lower = -180;
+	p->angle += deltaAngle;
+	if (p->angle > upper) p->angle -= 360;
+	if (p->angle < lower) p->angle += 360;
+}
+
+task computePosition() {
+	while (true) {
+		wait1Msec(10);
+		int curLeft = nMotorEncoder[LEFT_WHEEL];
+		int curRight = nMotorEncoder[RIGHT_WHEEL];
+		int deltaLeft = curLeft - leftEncodings;
+		int deltaRight = curRight - rightEncodings;
+		switch (robotState) {
+			case MOVE_STATE:
+				addDistance(&position, deltaLeft / ENCODINGS_PER_CM);
+				break;
+			case ROTATE_STATE:
+			  addAngle(&position, deltaLeft / ENCODINGS_PER_DEGREE);
+				break;
+		}
+
+		leftEncodings = curLeft;
+		rightEncodings = curRight;
+	}
+}
+
 
 task main()
 {
 
+	position.x = 0;
+	position.y = 0;
+	position.angle = 0;
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
 
 	if (synch) {
 
-		//nMotorPIDSpeedCtrl[motorC] = mtrSpeedReg;
-		//nMotorPIDSpeedCtrl[motorB] = mtrSpeedReg;
+		nMotorPIDSpeedCtrl[motorC] = mtrSpeedReg;
+		nMotorPIDSpeedCtrl[motorB] = mtrSpeedReg;
 
 	// A is master and C is slave
 		nSyncedMotors = synchAC;
@@ -115,6 +175,13 @@ task main()
 
  // moveForward40();
 
+	StartTask(computePosition);
+	//move(50, 40);
+	moveForward40();
+	//moveForward40();
+	printDebugStats();
+
+	return;
 
 	int i = 0;
 	int loops = 4;
