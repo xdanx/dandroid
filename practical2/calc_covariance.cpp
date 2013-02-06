@@ -58,5 +58,8 @@ Pos = [(3.1, 0.4),
         cout << "p[" << i << "] = " << p[i] << endl;
     }
 
+    
+    scanf("%d",p[0]);
     return 0;
+    
 }
