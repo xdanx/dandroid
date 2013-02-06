@@ -93,14 +93,34 @@ void addAngle(Position* p, float deltaAngle) {
 /* Our own functions here */
 
 
-#define CENTERED_TRESHOLD 5
+#define CENTERED_THRESHOLD 5
+
 
 void light_centered()
 {
-	return (SensorValue[lightLeft] - SensorValue[lightRight]) < CENTERED_TRESHOLD;
+	return ( (SensorValue[lightLeft] - SensorValue[lightRight]) < CENTERED_THRESHOLD &&
+				  SensorValue[lightLeft] > CAPTURE_THRESHOLD && SensorValue[lightRight] > CAPTURE_THRESHOLD );
+}
+
+void light_unbalanced()
+{
+	return (SensorValue[lightLeft] > CAPTURE_THRESHOLD || SensorValue[lightRight] >  CAPTURE_THRESHOLD );
 }
 
 
+task balance_light()
+{
+
+
+}
+
+task find_light()
+{
+	stop();
+
+
+
+}
 
 
 task main() {
@@ -113,6 +133,7 @@ task main() {
 		}
 		else if ( light_unbalanced() )
 		{
+			// Here one sensor detects light, the other doesn't
 			balance_light();
 		}
 		else
