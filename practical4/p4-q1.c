@@ -99,40 +99,38 @@ void addAngle(Position* p, float deltaAngle) {
 
 #define TRU true
 
-// This tasks will update the values every 500 ms
-task update_sensors_value()
-{
-	while (TRU)
-	{
-		light_left 	= SensorValue[lightLeft];
-		light_right =	SensorValue[lightRight];
-		bumper_left = SensorValue[touchLeft];
-		bumper_right= SensorValue[touchRight];
-		wait1Msec(200);
-	}
+void avoid_obstacle() {
+
+	writeDebugStream("DEBUG: Started task avoid_obstacle\n");
 
 
-}
+	// Read the values reported by the sensors
+	int left_bump = SensorValue[touchLeft];
+	int right_bump = SensorValue[touchRight];
 
-task avoid_obstacle() {
-
-	stop();
-	motor[LEFT_WHEEL] = -25;
-	motor[RIGHT_WHEEL] = -25;
-	wait1Msec(1000);
+	// First of all, emergency stop
 	stop();
 
-	if(dir == 0) {
-	//hit was center
-		rotate(45);
+	if ( left_bump == 1 && right_bump == 1 ) {
+		//hit was center
+		move(-25,10); // move back 10cm
+		rotate(60); // rotate left 60 degrees
+		move(25, 20); // go in front
+		rotate(-60); // go back into position
 
-	} else if(dir == 1) {
-	//hit was right
-		rotate(45);
+	} else if (right_bump == 1) {
+		//hit was right
+		move(-25,5); // move back 10cm
+		rotate(30); // rotate left 30 degrees
+		move(25, 10); // go in front
+		rotate(-30); // go back into position
 
 	} else {
-	//hit was left
-		rotate(-45);
+		//hit was left
+		move(-25,5); // move back 10cm
+		rotate(-30); // rotate right 30 degrees
+		move(25, 10); // go in front
+		rotate(30); // go back into position
 
 		}
 }
@@ -140,28 +138,37 @@ task avoid_obstacle() {
 
 
 task move_forever () {
-	writeDebugStream("DEBUG: Started task move_forever");
-	move(25, 1000000000);
+	writeDebugStream("DEBUG: Started task move_forever\n");
+	move(15, 1000000000);
+}
+
+int bumped()
+{
+	// Return if either left or right bump
+	return SensorValue[touchLeft] || SensorValue[touchRight];
 }
 
 
 task main() {
 
 
-	StartTask(update_sensors_value);
-	char[100] current_task_moving;
-
+	//StartTask(update_sensors_value);
 	StartTask(move_forever);
 
 	while (TRU)
 	{
-		if (bumped())
+		if ( bumped() )
 		{
-			current_task_moving =
 
-			StartTaskWithPriority(avoid_obstacle,11);
+			// Can either Stop the move forward
+			// task or have a higher priority task.
+			StopTask(move_forever);
+			wait1Msec(200);
+			// Start the avoid obstacle turn
+			avoid_obstacle();
+			// Exit the program
+			return;
 		}
-
 	}
 
 }

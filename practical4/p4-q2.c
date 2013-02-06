@@ -8,7 +8,6 @@
 int ROTATE_90_TIME = 1210;
 int ROTATE_POWER = 25;
 int MOVE_POWER = 10;
-const int DISPLAY_SCALE = 10;
 
 const float K = 0.00036; // for distance in cm, and time in milliseconds
 
@@ -22,19 +21,11 @@ int GUN = motorB;
 /* end constants */
 
 // global vars
-bool synch = true;
+
 int robotState = MOVE_STATE;
 int leftEncodings = 0;
 int rightEncodings = 0;
 int dir = 0;
-
-typedef struct {
-	float x;
-	float y;
-	float angle; // -pi < angle < pi, 0 when robot pointed towards x+
-} Position;
-
-Position position;
 
 /* Values read by the sensors */
 
@@ -99,69 +90,36 @@ void addAngle(Position* p, float deltaAngle) {
 
 #define TRU true
 
-// This tasks will update the values every 500 ms
-task update_sensors_value()
+/* Our own functions here */
+
+
+#define CENTERED_TRESHOLD 5
+
+void light_centered()
 {
-	while (TRU)
-	{
-		light_left 	= SensorValue[lightLeft];
-		light_right =	SensorValue[lightRight];
-		bumper_left = SensorValue[touchLeft];
-		bumper_right= SensorValue[touchRight];
-		wait1Msec(200);
-	}
-
-
-}
-
-task avoid_obstacle() {
-
-	stop();
-	motor[LEFT_WHEEL] = -25;
-	motor[RIGHT_WHEEL] = -25;
-	wait1Msec(1000);
-	stop();
-
-	if(dir == 0) {
-	//hit was center
-		rotate(45);
-
-	} else if(dir == 1) {
-	//hit was right
-		rotate(45);
-
-	} else {
-	//hit was left
-		rotate(-45);
-
-		}
+	return (SensorValue[lightLeft] - SensorValue[lightRight]) < CENTERED_TRESHOLD;
 }
 
 
-
-task move_forever () {
-	writeDebugStream("DEBUG: Started task move_forever");
-	move(25, 1000000000);
-}
 
 
 task main() {
 
-
-	StartTask(update_sensors_value);
-	char[100] current_task_moving;
-
-	StartTask(move_forever);
-
 	while (TRU)
 	{
-		if (bumped())
+		if ( light_centered() )
 		{
-			current_task_moving =
-
-			StartTaskWithPriority(avoid_obstacle,11);
+			continue;
 		}
-
+		else if ( light_unbalanced() )
+		{
+			balance_light();
+		}
+		else
+		{
+			// We are not finding light, just look for a source of light
+			find_light();
+		}
 	}
 
 }
