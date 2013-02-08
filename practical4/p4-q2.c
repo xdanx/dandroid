@@ -54,7 +54,6 @@ int get_right_light_sensor()
 
 void print_sensors()
 {
-	return;
 	writeDebugStream("Left: %d - Right: %d\n", get_left_light_sensor(), get_right_light_sensor());
 }
 
@@ -65,16 +64,9 @@ bool light_centered()
 {
 	print_sensors();
 
-	/* (	get_left_light_sensor() 	- LEFT_CENTERED_THRESHOLD -
-						get_right_light_sensor() 	+ RIGHT_CENTERED_THRESHOLD < BOTH_CENTERED_THRESHOLD ) &&
-	*/
-
-	// Here the ( left sensor - left thresh ) - ( right sensor - right thresh ) < both centered
-
 	return
-				  (get_left_light_sensor() 	> LEFT_CENTERED_THRESHOLD ) &&
-				  (get_right_light_sensor() > RIGHT_CENTERED_THRESHOLD ) ;
-	/**/
+			(get_left_light_sensor() > LEFT_CAPTURE_THRESHOLD && get_right_light_sensor() >  RIGHT_CAPTURE_THRESHOLD ) &&
+			abs(get_left_light_sensor() - get_right_light_sensor()) <= CENTERED_THRESHOLD;
 }
 
 int light_unbalanced()
@@ -124,14 +116,16 @@ void findThreshold()
 
 task main()
 {
-	findThreshold();
+	//findThreshold();
 	while (TRU)
 	{
 		//dbg("Starting while loop");
 		if ( light_centered() )
 		{
 			dbg("Entered light centered");
+
 			stop();
+			//wait1Msec(2000);
 			continue;
 		}
 		else if ( light_unbalanced() )
