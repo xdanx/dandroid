@@ -6,14 +6,12 @@
 
 #include "conf.txt"
 
-
 /* constants */
-
 int LEFT_WHEEL = motorA;
 int RIGHT_WHEEL = motorC;
 int GUN = motorB;
-
 /* end constants */
+
 /* Starting functions needed for interacting with the robot */
 void stop() {
 	motor[LEFT_WHEEL] = 0;
@@ -72,6 +70,7 @@ bool light_centered()
 	*/
 
 	// Here the ( left sensor - left thresh ) - ( right sensor - right thresh ) < both centered
+
 	return
 				  (get_left_light_sensor() 	> LEFT_CENTERED_THRESHOLD ) &&
 				  (get_right_light_sensor() > RIGHT_CENTERED_THRESHOLD ) ;
@@ -84,7 +83,7 @@ int light_unbalanced()
 }
 
 
-task balance_light()
+void balance_light()
 {
 	dbg("Entered balance_light");
 	print_sensors();
@@ -97,34 +96,35 @@ task balance_light()
 
 }
 
-task find_light()
+void find_light()
 {
 	dbg("Entered find_light");
 	rotate(ROTATE_LEFT,FIND_ROTATE_POWER);
 }
 
-task foo() {
-		dbg("foo func");
+void findThreshold()
+{
+	int lightValueLeft = 0;
+	int lightValueRight = 0;
+	int darkValueLeft = 0;
+	int darkValueRight = 0;
+
+	lightValueLeft = get_left_light_sensor();
+	lightValueRight = get_right_light_sensor();
+
+	dbg("remove light please");
+	wait1Msec(2000);
+
+	darkValueLeft = get_left_light_sensor();
+	darkValueRight = get_right_light_sensor();
+
+	LEFT_CAPTURE_THRESHOLD = (lightValueLeft + lightValueRight)/2;
+	RIGHT_CAPTURE_THRESHOLD = (lightValueLeft + lightValueRight)/2;
 }
-
-
-//void start_tk_activity(void* to_run, void* )
 
 task main()
 {
-	writeDebugStream("DEBUG: %d\n", foo);
-
-	int* fooptr = &foo;
-
-	int fututz = 3;
-	writeDebugStream("DEBUG: %d\n", fututz);
-	dbg("running task");
-  StartTask(*fooptr);
-	dbg("ran task");
-	wait10Msec(1000000);
-	return;
-	//void *current_task = 0;
-
+	findThreshold();
 	while (TRU)
 	{
 		//dbg("Starting while loop");
@@ -137,12 +137,12 @@ task main()
 		else if ( light_unbalanced() )
 		{
 			// Here one sensor detects light, the other doesn't
-			StartTask(balance_light);
+			balance_light();
 		}
 		else
 		{
 			// We are not finding light, just look for a source of light
-			StartTask(find_light);
+			find_light();
 		}
 	}
 
