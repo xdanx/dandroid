@@ -8,26 +8,12 @@
 
 
 /* constants */
-int ROTATE_90_TIME = 1210;
-int ROTATE_POWER = 25;
-int MOVE_POWER = 10;
-
-const float K = 0.00036; // for distance in cm, and time in milliseconds
 
 int LEFT_WHEEL = motorA;
 int RIGHT_WHEEL = motorC;
 int GUN = motorB;
 
 /* end constants */
-
-// global vars
-
-int robotState = MOVE_STATE;
-int leftEncodings = 0;
-int rightEncodings = 0;
-int dir = 0;
-
-
 /* Starting functions needed for interacting with the robot */
 void stop() {
 	motor[LEFT_WHEEL] = 0;
@@ -35,24 +21,10 @@ void stop() {
   wait1Msec(1000);
 }
 
-/* move time in millis based on K constant */
-float getMoveTime(float power, int distance) {
-	return  (distance * 1.0) / (K * power);
-}
-
-void move(int power, float distance) {
-	robotState = MOVE_STATE;
-	motor[LEFT_WHEEL] = power;
-	motor[RIGHT_WHEEL] = power;
-	float time = getMoveTime(abs(power), distance);
-	wait1Msec(time);
-	stop();
-}
-
 // This function gets the argument, to see in which direction the
 // robot should move, 1 or -1
 
-void rotate(int degs) {
+void rotate(int degs, int power) {
 	int dir = 1;
 	if (degs < 0) {
 		dir = -1;
@@ -60,12 +32,13 @@ void rotate(int degs) {
 	}
 
 	// Inverse the motors speed
-  motor[LEFT_WHEEL] 	= dir * ROTATE_POWER;
-  motor[RIGHT_WHEEL] 	= -dir * ROTATE_POWER;
+  motor[LEFT_WHEEL] 	= dir * power;
+  motor[RIGHT_WHEEL] 	= -dir * power;
 }
 
 void dbg(char* s)
 {
+	//return;
 	writeDebugStream("DEBUG: %s\n",s);
 }
 
@@ -73,34 +46,41 @@ void dbg(char* s)
 int get_left_light_sensor()
 {
 	// This sensor needs correction to be as the other one
-	return SensorValue[lightLeft] * LEFT_LIGHT_CORRECTION;
+	return SensorValue[lightLeft];
 }
 int get_right_light_sensor()
 {
 	// This sensor is returned as it is
-	return SensorValue[lightRight] * RIGHT_LIGHT_CORRECTION;
+	return SensorValue[lightRight];
 }
 
 void print_sensors()
 {
-	writeDebugStream("Left: %d - Right: %d\n", get_left_light_sensor(), get_right_light_sensor());
 	return;
+	writeDebugStream("Left: %d - Right: %d\n", get_left_light_sensor(), get_right_light_sensor());
 }
 
 /* End functions used to interact with the robot */
-
 /* Our own functions here */
 
-int light_centered()
+bool light_centered()
 {
 	print_sensors();
-	return ( ( get_left_light_sensor() - get_right_light_sensor()) < CENTERED_THRESHOLD &&
-				  get_left_light_sensor() > CAPTURE_THRESHOLD && get_right_light_sensor() > CAPTURE_THRESHOLD );
+
+	/* (	get_left_light_sensor() 	- LEFT_CENTERED_THRESHOLD -
+						get_right_light_sensor() 	+ RIGHT_CENTERED_THRESHOLD < BOTH_CENTERED_THRESHOLD ) &&
+	*/
+
+	// Here the ( left sensor - left thresh ) - ( right sensor - right thresh ) < both centered
+	return
+				  (get_left_light_sensor() 	> LEFT_CENTERED_THRESHOLD ) &&
+				  (get_right_light_sensor() > RIGHT_CENTERED_THRESHOLD ) ;
+	/**/
 }
 
 int light_unbalanced()
 {
-	return (get_left_light_sensor() > CAPTURE_THRESHOLD || get_right_light_sensor() >  CAPTURE_THRESHOLD );
+	return (get_left_light_sensor() > LEFT_CAPTURE_THRESHOLD || get_right_light_sensor() >  RIGHT_CAPTURE_THRESHOLD );
 }
 
 
@@ -109,29 +89,45 @@ task balance_light()
 	dbg("Entered balance_light");
 	print_sensors();
 	// In this task, the light_unbalanced() condition holds
-	if ( get_left_light_sensor() > get_right_light_sensor() )
-		rotate(ROTATE_LEFT);
+	if ( 	get_left_light_sensor()  - LEFT_CAPTURE_THRESHOLD >
+				get_right_light_sensor() - RIGHT_CAPTURE_THRESHOLD )
+		rotate(ROTATE_LEFT,BALANCE_ROTATE_POWER);
 	else
-		rotate(ROTATE_RIGHT);
+		rotate(ROTATE_RIGHT,BALANCE_ROTATE_POWER);
 
 }
 
 task find_light()
 {
 	dbg("Entered find_light");
-	rotate(ROTATE_LEFT);
+	rotate(ROTATE_LEFT,FIND_ROTATE_POWER);
+}
+
+task foo() {
+		dbg("foo func");
 }
 
 
+//void start_tk_activity(void* to_run, void* )
+
 task main()
 {
+	writeDebugStream("DEBUG: %d\n", foo);
 
-	//void *curr_task = null;
+	int* fooptr = &foo;
+
+	int fututz = 3;
+	writeDebugStream("DEBUG: %d\n", fututz);
+	dbg("running task");
+  StartTask(*fooptr);
+	dbg("ran task");
+	wait10Msec(1000000);
+	return;
+	//void *current_task = 0;
 
 	while (TRU)
 	{
 		//dbg("Starting while loop");
-		wait1Msec(1000);
 		if ( light_centered() )
 		{
 			dbg("Entered light centered");
@@ -148,7 +144,6 @@ task main()
 			// We are not finding light, just look for a source of light
 			StartTask(find_light);
 		}
-	wait1Msec(1000);
 	}
 
 
