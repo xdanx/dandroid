@@ -37,21 +37,16 @@ void move_back(int power) {
 // This function gets the argument, to see in which direction the
 // robot should move, 1 or -1
 
-void rotate(int degs, int power) {
-	int dir = 1;
-	if (degs < 0) {
-		dir = -1;
-		degs = -degs;
-	}
-
+void rotate(int dir, int power) {
 	// Inverse the motors speed
   motor[LEFT_WHEEL] 	= dir * power;
   motor[RIGHT_WHEEL] 	= -dir * power;
+
 }
 
 void right_curve(int power) {
-	motor[LEFT_WHEEL] = power;
-	motor[RIGHT_WHEEL] = 1.8 * power;
+	motor[LEFT_WHEEL] = 1.4*power;
+	motor[RIGHT_WHEEL] = power;
 
 	wait1Msec(4000);
 
@@ -59,8 +54,8 @@ void right_curve(int power) {
 }
 
 void left_curve(int power) {
-	motor[LEFT_WHEEL] = 1.8 * power;
-	motor[RIGHT_WHEEL] = power;
+	motor[LEFT_WHEEL] = power;
+	motor[RIGHT_WHEEL] = 1.4*power;
 
 	wait1Msec(4000);
 	stop();
@@ -136,18 +131,24 @@ void avoid_obstacle()
 	{
 		dbg("Hit was centered");
 		//hit was center
+		rotate(ROTATE_LEFT, DEFAULT_POWER);
+		wait1Msec(1000);
 		left_curve(DEFAULT_POWER);
 
 	} else if (right_bump == 1)
 	{
 		dbg("Hit was right");
 		//hit was right
+		rotate(ROTATE_LEFT, DEFAULT_POWER);
+		wait1Msec(1000);
 		left_curve(DEFAULT_POWER);
 
 	} else
 	{
 		dbg("Hit was left");
 		//hit was left
+		rotate(ROTATE_RIGHT, DEFAULT_POWER);
+		wait1Msec(1000);
 		right_curve(DEFAULT_POWER);
 
 	}
@@ -231,17 +232,17 @@ task main()
 	{
 		//wait1Msec(2000);
 
-		if ( bumped() )
-		{
-			dbg("Entered bumped");
-			stop();
-			avoid_obstacle();
-		}
-		else if ( light_arrived() )
+		if ( light_arrived() )
 		{
 			stop();
 			dbg("Entered light_arrived");
 			continue; // return;
+		}
+		else	if ( bumped() )
+		{
+			dbg("Entered bumped");
+			stop();
+			avoid_obstacle();
 		}
 		else if ( light_balanced() )
 		{

@@ -1,0 +1,27 @@
+Action routines:
+
+turn(direction, power ) => Turn left or right with speed power, based on direction
+move_forward(power)     => Move forward with speed power
+left_curve(powe)        => Follow curve path to the left with speed power
+right_curve(power)      => Follow curve path to the right with speed power
+
+find_light {
+  light_arrived()     => nil
+  bumped()            => avoid_obstacle
+  light_balanced()    => move_forward(10)
+  light_unbalanced()  => balance_light
+  true                => turn(left, 10)
+}
+
+
+
+avoid_obstacle {
+  left_bumped && right_bumped => move_back(20), turn(left,10), right_curve(10)
+  left_bumped   => move_back(20), turn(right, 10), left_curve(10)
+  right_bumped  => move_back(20), turn(left,10), right_curve(10)
+}
+
+balance_light {
+  left_sensor_reading > right_sensor_reading => turn(left, 10)
+  true                                       => turn(right,10)
+}
