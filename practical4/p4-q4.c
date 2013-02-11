@@ -132,7 +132,7 @@ void avoid_obstacle()
 		dbg("Hit was centered");
 		//hit was center
 		rotate(ROTATE_LEFT, DEFAULT_POWER);
-		wait1Msec(1500);
+		wait1Msec(750);
 		left_curve(DEFAULT_POWER);
 
 	} else if (right_bump == 1)
@@ -140,7 +140,7 @@ void avoid_obstacle()
 		dbg("Hit was right");
 		//hit was right
 		rotate(ROTATE_LEFT, DEFAULT_POWER);
-		wait1Msec(1500);
+		wait1Msec(750);
 		left_curve(DEFAULT_POWER);
 
 	} else
@@ -148,7 +148,7 @@ void avoid_obstacle()
 		dbg("Hit was left");
 		//hit was left
 		rotate(ROTATE_RIGHT, DEFAULT_POWER);
-		wait1Msec(1500);
+		wait1Msec(750);
 		right_curve(DEFAULT_POWER);
 
 	}
@@ -226,13 +226,13 @@ task main()
 	set_manual_thresholds();
 
 	print_thresholds();
-	wait1Msec(1000);
+	//wait1Msec(1000);
 
 	while (TRU)
 	{
 		//wait1Msec(2000);
 
-		if ( light_arrived() )
+		if ( false && light_arrived() )
 		{
 			stop();
 			dbg("Entered light_arrived");
