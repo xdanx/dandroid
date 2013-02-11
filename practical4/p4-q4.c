@@ -45,19 +45,19 @@ void rotate(int dir, int power) {
 }
 
 void right_curve(int power) {
-	motor[LEFT_WHEEL] = 1.4*power;
+	motor[LEFT_WHEEL] = 1.2*power;
 	motor[RIGHT_WHEEL] = power;
 
-	wait1Msec(4000);
+	wait1Msec(5000);
 
 	stop();
 }
 
 void left_curve(int power) {
 	motor[LEFT_WHEEL] = power;
-	motor[RIGHT_WHEEL] = 1.4*power;
+	motor[RIGHT_WHEEL] = 1.2*power;
 
-	wait1Msec(4000);
+	wait1Msec(5000);
 	stop();
 }
 
@@ -132,7 +132,7 @@ void avoid_obstacle()
 		dbg("Hit was centered");
 		//hit was center
 		rotate(ROTATE_LEFT, DEFAULT_POWER);
-		wait1Msec(1000);
+		wait1Msec(1500);
 		left_curve(DEFAULT_POWER);
 
 	} else if (right_bump == 1)
@@ -140,7 +140,7 @@ void avoid_obstacle()
 		dbg("Hit was right");
 		//hit was right
 		rotate(ROTATE_LEFT, DEFAULT_POWER);
-		wait1Msec(1000);
+		wait1Msec(1500);
 		left_curve(DEFAULT_POWER);
 
 	} else
@@ -148,7 +148,7 @@ void avoid_obstacle()
 		dbg("Hit was left");
 		//hit was left
 		rotate(ROTATE_RIGHT, DEFAULT_POWER);
-		wait1Msec(1000);
+		wait1Msec(1500);
 		right_curve(DEFAULT_POWER);
 
 	}
