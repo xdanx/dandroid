@@ -1,0 +1,16 @@
+/* constants */
+int ROTATE_90_TIME = 1210;
+int ROTATE_POWER = 25;
+int MOVE_POWER = 10;
+
+const float K = 0.00036; // for distance in cm, and time in milliseconds
+const float ENCODINGS_PER_CM = 27.5;
+const float ENCODINGS_PER_DEGREE = 3;
+
+int LEFT_WHEEL = motorA;
+int RIGHT_WHEEL = motorC;
+int GUN = motorB;
+
+#define MOVE_STATE 0
+#define ROTATE_STATE 1
+/* end constants */
