@@ -2,7 +2,7 @@
 // Andrew Davison 2008-2012
 
 const int NUMBER_OF_PARTICLES = 100;
-const int NUMBER_OF_WALLS = 9;
+const int NUMBER_OF_WALLS = 8;
 
 // Arrays for storing information about particles
 float xArray[NUMBER_OF_PARTICLES];
@@ -45,12 +45,12 @@ void drawParticles()
 {
 	// Draw the particle set
 	for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-		nxtSetPixel((int)(xArray[i]/DISPLAY_SCALE), (int)(yArray[i]/DISPLAY_SCALE));
+		nxtSetPixel(15 + (int)(xArray[i]), 15+ (int)(yArray[i]));
 	}
 
 }
 
-task main()
+/*task main()
 {
 	eraseDisplay();
 
@@ -60,4 +60,4 @@ task main()
 
 	wait1Msec(5000);
 
-}
+}*/
