@@ -4,12 +4,10 @@
 
 /* Variables used in our program */
 
-bool synch = true;
 int robotState = MOVE_STATE;
 int leftEncodings = 0;
 int rightEncodings = 0;
 
-int milage = 0;
 
 typedef struct {
 	float x;
@@ -30,55 +28,48 @@ void stop()
 }
 
 /* move time in millis based on K constant */
-float getMoveTime(float power, int distance) {
+float get_move_time(float power, int distance) {
 	return  (distance * 1.0) / (K * power);
 }
 
-
-void move(int power, float distance) {
+void move_forward(int power, float distance) {
 	robotState = MOVE_STATE;
+
 	motor[LEFT_WHEEL] = power;
 	motor[RIGHT_WHEEL] = power;
-	float time = getMoveTime(power, distance);
+	float time = get_move_time(power, distance);
 	wait1Msec(time);
 	stop();
 }
 
-void shoot()
-{
-	motor[motorA] = 0;
-  motor[motorC] = 0;
-  motor[motorB] = 100;
-  wait1Msec(4000);
-}
-
-
-void clearDebugStats()
+/* Debugging variables */
+void clear_debug_stats()
 {
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
 }
 
-void printDebugStats()
+void print_debug_stats()
 {
 	writeDebugStream("LEFT_WHEEL encoder: %d\n", nMotorEncoder[LEFT_WHEEL] );
 	writeDebugStream("RIGHT_WHEEL encoder: %d\n", nMotorEncoder[RIGHT_WHEEL] );
 	//clearDebugStats();
 }
+/* End debugging variables */
 
-void addDistance(Position* p, float distance) {
-	int i=0;
+/* Distance related functions  */
+void position_add_distance(Position* p, float distance) {
 
 	p->x += distance * cosDegrees(p->angle);
 	p->y += distance * sinDegrees(p->angle);
 	return;
 }
 
-void addAngle(Position* p, float deltaAngle) {
+void position_add_angle(Position* p, float deltaAngle) {
 	const float upper = 180;
 	const float lower = -180;
-	float e;
-	int i=0;
+
+
 	p->angle += deltaAngle;
 	if (p->angle > upper) p->angle -= 360;
 	if (p->angle < lower) p->angle += 360;
@@ -98,7 +89,10 @@ void rotate(int degs) {
   stop();
 }
 
-void updateArrays(Position* p, float distance, int state) {
+
+/* functions related to points */
+
+void points_update(Position* p, float distance, int state) {
 	int i;
 	float e;
 	switch (state) {
@@ -121,75 +115,79 @@ void updateArrays(Position* p, float distance, int state) {
 	}
 }
 
+/* End functions related to points */
+/* Start task functions */
 
-void print_points()
-{
-	int mileage = 0, i,j;
-	// We are making 4 corners
-	for(i=1; i<=4; ++i)
-	{
-		// Each straight line, we are marking each 4 points ( each 10 cm out of 40)
-		for(j=1; j<=4; ++j)
-		{
-			updateArrays(&position, mileage, MOVE_STATE);
-			addDistance(&position, mileage);
-			mileage += 10;
-			drawParticles();
-		}
-		addAngle(&position, 90);
-		updateArrays(&position, mileage,ROTATE_STATE);
-	}
-
-}
-
-
-task drawPosition() {
+task vehicle_draw_position() {
 	while (true) {
 		wait1Msec(10);
 		nxtSetPixel(15 + (int)(position.x), 15 + (int)(position.y));
 	}
 }
 
-task drawScatter() {
-	while(true) {
-		wait1Msec(1000);
-		drawParticles();
+task vehicle_compute_position() {
+	while (true) {
+		wait1Msec(10);
+		int curLeft = nMotorEncoder[LEFT_WHEEL];
+		int curRight = nMotorEncoder[RIGHT_WHEEL];
+		int deltaLeft = curLeft - leftEncodings;
+		int deltaRight = curRight - rightEncodings;
+
+		switch (robotState) {
+			case MOVE_STATE:
+				position_add_distance(&position, deltaLeft / ENCODINGS_PER_CM);
+				break;
+			case ROTATE_STATE:
+			  // The angle will be added by the rotate function
+				//addAngle(&position, deltaLeft / ENCODINGS_PER_DEGREE);
+				break;
+		}
+
+		leftEncodings = curLeft;
+		rightEncodings = curRight;
 	}
 }
 
+/* End tasks */
+
 task main() {
+
 	position.x = 0;
 	position.y = 0;
 	position.angle = 0;
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
 
-	print_points();
+	StartTask(vehicle_compute_position);
+	StartTask(vehicle_draw_position);
 
-	wait1Msec(90000);
-	return;
-
-
-
-	/*
-	StartTask(computePosition);
-	StartTask(drawPosition);
-	StartTask(drawScatter);
-
-	int i = 0;
+	int i,j;
 	int loops = 4;
-	int endRotation = 0;
+	int segments = 4;
+	int milage = 0;
+
 	for (i=0 ;i < loops; ++i) {
-		move(MOVE_POWER,40);
-		printDebugStats();
+
+		for (j=0; j < segments; ++j)
+		{
+			eraseDisplay();
+			// The robot moved to the new segment
+			points_update(position, milage, MOVE_STATE);
+			drawParticles();
+			move_forward(MOVE_POWER,10);
+			milage += 10;
+		}
+
 	  rotate(90);
-	  printDebugStats();
+	  position_add_angle(position, 90);
+	  points_update(position, milage, ROTATE_STATE);
+		drawParticles();
   }
 
-  StopTask(computePosition);
-  StopTask(drawPosition);
-  StopTask(drawScatter);
+  StopTask(vehicle_compute_position);
+  StopTask(vehicle_draw_position);
+
   wait10Msec(6000); // wait 1MIN
-  */
+
 
 }
