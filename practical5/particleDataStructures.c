@@ -45,7 +45,7 @@ void drawParticles()
 {
 	// Draw the particle set
 	for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-		nxtSetPixel(15 + (int)(xArray[i]), 15+ (int)(yArray[i]));
+		nxtSetPixel(15 + (int)(xArray[i]), 15 + (int)(yArray[i]));
 	}
 
 }

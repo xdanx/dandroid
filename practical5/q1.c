@@ -66,13 +66,10 @@ void position_add_distance(Position* p, float distance) {
 }
 
 void position_add_angle(Position* p, float deltaAngle) {
-	const float upper = 180;
-	const float lower = -180;
-
 
 	p->angle += deltaAngle;
-	if (p->angle > upper) p->angle -= 360;
-	if (p->angle < lower) p->angle += 360;
+	if (p->angle > THETA_UPPER) p->angle -= 360;
+	if (p->angle < THETA_LOWER) p->angle += 360;
 }
 
 void rotate(int degs) {
@@ -103,26 +100,27 @@ void print_10_points()
 void points_update(Position* p, float distance, int state) {
 	int i;
 	float e, f;
+
 	switch (state) {
 		case MOVE_STATE:
 			for(i=0; i<NUMBER_OF_PARTICLES; i++) {
 				e = sampleGaussian(0.0, 0.881);
 				f = sampleGaussian(0.0, 0.881);
-				//writeDebugStream("Our random vars are: e=%f f=%f\n",e,f);
-				xArray[i] = p->x + (distance + e) * cosDegrees(p->angle);
-				yArray[i] = p->y + (distance + e) * cosDegrees(p->angle);
-
-				thetaArray[i] = p->angle + f;
+				writeDebugStream("Our random vars are: e=%f f=%f\n",e,f);
+				xArray[i] = xArray[i] + (distance + e) * cosDegrees(thetaArray[i]);
+				yArray[i] = yArray[i] + (distance + e) * sinDegrees(thetaArray[i]);
+				thetaArray[i] = thetaArray[i] + f;
 			}
 			print_10_points();
 			break;
 		case ROTATE_STATE:
 			print_10_points();
-			for(i=0; i<NUMBER_OF_PARTICLES; i++) {
+			for( i=0; i<NUMBER_OF_PARTICLES; i++) {
+
 				e = sampleGaussian(0.0, 0.881);
-				// Theta is added 90 degrees when is updated with update_position
-				// we just add the error here.
-				thetaArray[i] = p->angle + e;
+				thetaArray[i] += 90 + e;
+				if (thetaArray[i] > THETA_UPPER) thetaArray[i] -= 360;
+				if (thetaArray[i] < THETA_LOWER) thetaArray[i] += 360;
 			}
 			print_10_points();
 			break;
@@ -137,7 +135,7 @@ void points_update(Position* p, float distance, int state) {
 task vehicle_draw_position() {
 	while (true) {
 		wait1Msec(10);
-		nxtSetPixel(15 + (int)(position.x), 15 + (int)(position.y));
+		nxtSetPixel(PRINT_OFFSET_X + (int)(position.x), PRINT_OFFSET_Y + (int)(position.y));
 	}
 }
 
@@ -183,17 +181,21 @@ task main() {
 	int segments = 4;
 	int milage = 0;
 
+	// Initial points update
+	points_update(position, milage, MOVE_STATE);
+	drawParticles();
 	for (i=0 ;i < loops; ++i) {
 
 		for (j=0; j < segments; ++j)
 		{
-			move_forward(MOVE_POWER,10);
-			eraseDisplay();
+			//eraseDisplay();
+			milage = 10;
+			move_forward(MOVE_POWER, milage);
+
 			// The robot moved to the new segment
 			points_update(position, milage, MOVE_STATE);
 			drawParticles();
 
-			milage += 10;
 		}
 
 	  rotate(90);
