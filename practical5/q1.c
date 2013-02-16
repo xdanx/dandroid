@@ -92,28 +92,44 @@ void rotate(int degs) {
 
 /* functions related to points */
 
+void print_10_points()
+{
+	int i;
+	for (i=0; i<10; ++i)
+		writeDebugStream("x:%f y:%f theta:%f\n",xArray[i], yArray[i], thetaArray[i]);
+	writeDebugStream("-------------\n");
+}
+
 void points_update(Position* p, float distance, int state) {
 	int i;
-	float e;
+	float e, f;
 	switch (state) {
 		case MOVE_STATE:
 			for(i=0; i<NUMBER_OF_PARTICLES; i++) {
 				e = sampleGaussian(0.0, 0.881);
+				f = sampleGaussian(0.0, 0.881);
+				//writeDebugStream("Our random vars are: e=%f f=%f\n",e,f);
 				xArray[i] = p->x + (distance + e) * cosDegrees(p->angle);
-				e = sampleGaussian(0.0, 0.881);
-				yArray[i] = p->y + (distance+e) * cosDegrees(p->angle);
-				e = sampleGaussian(0.0, 0.881);
-				thetaArray[i] = p->angle + e;
+				yArray[i] = p->y + (distance + e) * cosDegrees(p->angle);
+
+				thetaArray[i] = p->angle + f;
 			}
+			print_10_points();
 			break;
 		case ROTATE_STATE:
+			print_10_points();
 			for(i=0; i<NUMBER_OF_PARTICLES; i++) {
 				e = sampleGaussian(0.0, 0.881);
-				thetaArray[i] = p->angle + 90 + e;
+				// Theta is added 90 degrees when is updated with update_position
+				// we just add the error here.
+				thetaArray[i] = p->angle + e;
 			}
+			print_10_points();
 			break;
 	}
 }
+
+
 
 /* End functions related to points */
 /* Start task functions */
@@ -152,6 +168,7 @@ task vehicle_compute_position() {
 
 task main() {
 
+	clearDebugStream();
 	position.x = 0;
 	position.y = 0;
 	position.angle = 0;
@@ -170,18 +187,18 @@ task main() {
 
 		for (j=0; j < segments; ++j)
 		{
+			move_forward(MOVE_POWER,10);
 			eraseDisplay();
 			// The robot moved to the new segment
 			points_update(position, milage, MOVE_STATE);
 			drawParticles();
-			move_forward(MOVE_POWER,10);
+
 			milage += 10;
 		}
 
 	  rotate(90);
 	  position_add_angle(position, 90);
 	  points_update(position, milage, ROTATE_STATE);
-		drawParticles();
   }
 
   StopTask(vehicle_compute_position);
