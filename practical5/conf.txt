@@ -13,4 +13,10 @@ int GUN = motorB;
 
 #define MOVE_STATE 0
 #define ROTATE_STATE 1
+
+#define THETA_LOWER 0
+#define THETA_UPPER 360
+
+#define PRINT_OFFSET_X 15
+#define PRINT_OFFSET_Y 15
 /* end constants */
