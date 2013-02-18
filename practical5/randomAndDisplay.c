@@ -17,7 +17,7 @@ task main()
 	{
 		// Get and print uniform-distributed and Gaussian-distributed random numbers
 		float uniform_float = sampleUniform(1.0);
-		float gaussian_float = sampleGaussian(0.0, 2.026);
+		float gaussian_float = sampleGaussian(2.0, 0.8);
 		nxtDisplayString(1, "Uniform : %04f", uniform_float);
 		nxtDisplayString(2, "Gaussian: %04f", gaussian_float);
 
