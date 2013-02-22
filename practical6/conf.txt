@@ -1,0 +1,23 @@
+/* constants */
+int ROTATE_90_TIME = 1090;
+int ROTATE_POWER = 25;
+int MOVE_POWER = 10;
+
+const float K = 0.000475; //0.00036; // for distance in cm, and time in milliseconds
+const float ENCODINGS_PER_CM = 20.525;
+const float ENCODINGS_PER_DEGREE = 3;
+
+int LEFT_WHEEL = motorA;
+int RIGHT_WHEEL = motorC;
+int GUN = motorB;
+
+#define MOVE_STATE 0
+#define ROTATE_STATE 1
+
+#define THETA_LOWER -180
+#define THETA_UPPER 180
+#define THETA_NORMALIZER 360
+
+#define PRINT_OFFSET_X 15
+#define PRINT_OFFSET_Y 15
+/* end constants */
