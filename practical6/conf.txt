@@ -20,4 +20,6 @@ int GUN = motorB;
 
 #define PRINT_OFFSET_X 15
 #define PRINT_OFFSET_Y 15
+
+#define DEBUG true
 /* end constants */

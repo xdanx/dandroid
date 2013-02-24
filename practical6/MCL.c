@@ -88,10 +88,11 @@ void position_add_distance(Position* p, float distance) {
 
 void position_add_angle(Position* p, float deltaAngle) {
 
-	//p->angle += deltaAngle;
-	writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
+	if (DEBUG)
+		writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
 	p->angle = normalize_angle_value(p->angle + deltaAngle);
-	writeDebugStream("Position_add_angle: Pos angle:%f\n",p->angle);
+	if (DEBUG)
+		writeDebugStream("Position_add_angle: Pos angle:%f\n",p->angle);
 }
 
 void rotate(float degs) {
@@ -128,40 +129,28 @@ float max(float a, float b)
 
 float calculate_likelihood(float x, float y, float theta, float z)
 {
-	//float x2 = x + 3 * cosDegrees(theta);
-	//float y2 = y + 3 * sinDegrees(theta);
+
 	int closestWallIndex = -1;
 	float shortestDistance = 0.0;
 	float m;
 	int i = 0;
-	//float currentDistance = 0.0;
 
-	//writeDebugStream("[calculate likelihood] Sonar %f\n", z);
-	//find wall intersection
 	for (i = 0; i < NUMBER_OF_WALLS; i++)
 	{
 		float a_x = wallAxArray[i], a_y = wallAyArray[i];
 		float b_x = wallBxArray[i], b_y = wallByArray[i];
 		m = ((b_y - a_y)*(a_x - x) - (b_x - a_x)*(a_y - y)) / ((b_y - a_y)*cosDegrees(theta) - (b_x - a_x)*sinDegrees(theta));
-		//writeDebugStream("[calculate_likelihood]: Wall Index %d and distance is %f \n", i, m);
 
 		float px = x + m*cosDegrees(theta);
 		float py = y + m*sinDegrees(theta);
-		//writeDebugStream("for wall i: %d px: %f py: %f", i, px, py);
-		wait1Msec(10);
-		//writeDebugStream("[calculate likelihood]: x3: %f, y3: %f, x4: %f y4:%f\n",x3, y3, x4, y4);
-		//writeDebugStream("[calculate likelihood]: CWI:%d SD: %f CD:%f\n", closestWallIndex, shortestDistance, m);
-		//wait1Msec(1000);
 
 		if((px >= min(a_x,b_x) && px <= max(a_x,b_x) && py >= min(a_y,b_y) && py <= max(a_y,b_y))) {
-			if( closestWallIndex == -1) {
-				//writeDebugStream("closestWallIndex is -1\n");
+			if( closestWallIndex == -1)
+			{
 				closestWallIndex = i;
-				//shortestDistance = distance(x,y,px,py);
 				shortestDistance = m;
-		  } else {
-		  	//writeDebugStream("closestWallIndex is not -1\n");
-		  	//currentDistance = distance(x,y,px,py);
+		  } else
+		  {
 		  	if(m < shortestDistance && m >= 0) {
 		  		closestWallIndex = i;
 		  		shortestDistance = m;
@@ -170,18 +159,7 @@ float calculate_likelihood(float x, float y, float theta, float z)
 		}
 	}
 
-	//writeDebugStream("[calculate likelihood 2]: CWI:%d SD: %f CD:%f\n", closestWallIndex, shortestDistance, m);
-	//find expected depth measurement m
-	// m = shortestDistance
-
-	//difference m - z = likelihood value (gaussian model)
 	float likelihood = exp(-pow(z-shortestDistance, 2) / (2 * pow(0.44, 2)));
-  //writeDebugStream("[calculate_likelihood ]: %f \n", likelihood);
-
-	//check incidence angle to see if sonar reading is valid
-	/*if(incidenceAngle() > 50)
-		return -1;*/
-
 	return likelihood;
 
 }
@@ -207,7 +185,6 @@ void points_update(float value, int state) {
 			for(i=0; i<NUMBER_OF_PARTICLES; i++) {
 				e = sampleGaussian(0.0, 0.881);
 				f = sampleGaussian(0.0, 0.881);
-				//writeDebugStream("Our random vars are: e=%f f=%f\n",e,f);
 				xArray[i] = xArray[i] + (value + e) * cosDegrees(thetaArray[i]);
 				yArray[i] = yArray[i] + (value + e) * sinDegrees(thetaArray[i]);
 				thetaArray[i] = thetaArray[i] + f;
@@ -217,7 +194,6 @@ void points_update(float value, int state) {
 			for( i=0; i<NUMBER_OF_PARTICLES; i++) {
 
 				e = sampleGaussian(0.0, 0.881);
-				//thetaArray[i] += value + e;
 				thetaArray[i] = normalize_angle_value(thetaArray[i] + value + e);
 			}
 			break;
@@ -260,13 +236,16 @@ void calculate_cumulative_array()
 		for(j=0; j<= i; ++j)
 			cumulativeWeightArray[i] += weightArray[j];
 	}
-	print_10_cwa();
+
+	if (DEBUG)
+		print_10_cwa();
 }
 
 void normalise_weight_array ()
 {
-	writeDebugStream("In normalise weight array\n");
-	print_10_cwa ();
+	if (DEBUG)
+		writeDebugStream("In normalise weight array\n");
+	//print_10_cwa ();
 
 	int i;
 	float sum = 0.0;
@@ -274,12 +253,15 @@ void normalise_weight_array ()
 	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
 		sum += weightArray[i];
 
-	writeDebugStream("Sum: %f\n",sum);
+	if (DEBUG)
+		writeDebugStream("Sum: %f\n",sum);
+
 	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
 		weightArray[i] /= sum;
 
-	print_10_cwa ();
-	writeDebugStream("End normalise weight array\n");
+	//print_10_cwa ();
+	if (DEBUG)
+		writeDebugStream("End normalise weight array\n");
 }
 
 int binary_search (float target)
@@ -316,7 +298,8 @@ void resample()
 	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
 		weightArray[i] = 1.0 / NUMBER_OF_PARTICLES;
 
-	print_100_cwa();
+	if (DEBUG)
+		print_100_cwa();
 	// Resample
 	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
 	{
@@ -349,8 +332,11 @@ void navigate_to_waypoint(float x, float y)
 	float med_x = 0, med_y = 0, med_theta = 0;
 	float i, z;
 
-	print_10_points();
-	print_10_cwa();
+	if (DEBUG)
+	{
+		print_10_points();
+		print_10_cwa();
+	}
 	// estimate current posistion
 	for (i=0; i < NUMBER_OF_PARTICLES; ++i)
 	{
@@ -413,7 +399,6 @@ void navigate_to_waypoint(float x, float y)
 	z = SensorValue[sonar];
 	for ( i = 0; i < NUMBER_OF_PARTICLES; i++ )
 	{
-		// SMTH MIGHT GO WRONG HERE
 		weightArray[i] = calculate_likelihood(xArray[i], yArray[i], thetaArray[i], z);
 	}
 
@@ -427,7 +412,6 @@ void set_starting_position(float x, float y, float theta)
 	position.y = y;
 	position.angle = theta;
 
-	writeDebugStream("%f",1/100);
 	int i;
 	for (i=0; i < NUMBER_OF_PARTICLES; ++i)
 	{
