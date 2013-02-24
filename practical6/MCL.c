@@ -110,6 +110,68 @@ void rotate(float degs) {
 
 /* functions related to points */
 
+float distance(float x1, float y1, float x2, float y2)
+{
+	return sqrt((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
+}
+
+float min(float a, float b)
+{
+	return a < b ? a : b;
+}
+
+float max(float a, float b)
+{
+	return a > b ? a : b;
+}
+
+
+float calculate_likelihood(float x, float y, float theta, float z)
+{
+	float x2 = x + 3 * cos(theta), y2 = y + 3 * sin(theta);
+	int closestWallIndex = -1;
+	float shortestDistance = 0;
+
+	//find wall intersection
+	for (int i = 0; i < NUMBER_OF_WALLS; i++)
+	{
+
+		float x3 = wallAxArray[i], y3 = wallAyArray[i];
+		float x4 = wallBxArray[i], y4 = wallByArray[i];
+		float px = ((x*y2 - y*x2) * (x3 - x4) - (x-x2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
+		float py = ((x*y2 - y*x2) * (y3 - y4) - (y-y2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
+		//writeDebugStream("bla: %d, %d, %d, %d", x3, y3, x4, y4);
+
+		if(! (px >= min(x3,x4) && px <= max(x3,x4) && py >= min(y3,y4) && py <= max(y3,y4)))
+			continue;
+
+		if(closestWallIndex == -1) {
+			closestWallIndex = i;
+			shortestDistance = distance(x,y,px,py);
+	  } else {
+	  	float currentDistance = distance(x,y,px,py);
+	  	if(currentDistance < shortestDistance) {
+	  		closestWallIndex = i;
+	  		shortestDistance = currentDistance;
+	  	}
+	  }
+	}
+
+	//find expected depth measurement m
+	// m = shortestDistance
+
+	//difference m - z = likelihood value (gaussian model)
+	float likelihood = exp(-pow(z-shortestDistance, 2) / (2 * pow(0.44, 2)));
+
+	//check incidence angle to see if sonar reading is valid
+	/*if(incidenceAngle() > 50)
+		return -1;*/
+
+	return likelihood;
+
+}
+
+
 void print_10_points()
 {
 	int i;
@@ -146,6 +208,105 @@ void points_update(float value, int state) {
 			break;
 	}
 }
+
+/* Start debug functions */
+// Print the last 10 cumulative weight arrays
+void print_10_cwa()
+{
+	writeDebugStream("Printing weights...\n");
+	int i;
+	for (i=NUMBER_OF_PARTICLES-11; i<NUMBER_OF_PARTICLES; ++i)
+		writeDebugStream("wa[%d]: %f - cwa[%d]: %f",i,weightArray[i], i,cumulativeWeightArray[i]);
+	writeDebugStream("-------------\n");
+}
+/* End debug functions */
+
+
+void calculate_cumulative_array()
+{
+	int i,j;
+	// Creating the cumulative Weight Array
+	for (i=0; i<NUMBER_OF_PARTICLES; ++i)
+		for(j=0; j<= i; ++j)
+			cumulativeWeightArray[i] += weightArray[j];
+	print_10_cwa();
+}
+
+void normalise_weight_array ()
+{
+	print_10_cwa ();
+
+	int i;
+	float sum = 0;
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		sum += weightArray[i];
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] /= sum;
+
+	print_10_cwa ();
+}
+
+int binary_search (float target)
+{
+	int begin = 0;
+	int end = NUMBER_OF_PARTICLES - 1;
+	int mid;
+
+	while (begin <= end)
+	{
+		mid = (begin + end) / 2;
+		if (target > cumulativeWeightArray[mid])
+			begin = mid + 1;
+		else if (target < cumulativeWeightArray[mid])
+			end = mid - 1;
+		else
+			return mid;
+	}
+
+	return begin;
+}
+
+
+void resample()
+{
+	// Normalise weight array
+	normalise_weight_array ();
+
+	// Calculate cumulative array
+	calculate_cumulative_array ();
+
+	// Reset weights to 1/N
+	int i;
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] = 1/NUMBER_OF_PARTICLES;
+
+	// Resample
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		// Generate random number between 0 and 1
+		unsigned int random100 = rand() % 100;
+		float random1 = random100 / 100;
+
+		// Search value of random1 in cumulativeWeightArray
+		int index = binary_search (random1);
+
+		// Copy new particle
+		xArrayCopy[index] = xArray[index];
+		yArrayCopy[index] = yArray[index];
+	  thetaArrayCopy[index] = thetaArray[index];
+	}
+
+	// Update spacial distribution
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		xArray[i] = xArrayCopy[i];
+		yArray[i] = yArrayCopy[i];
+		thetaArray[i] = thetaArrayCopy[i];
+	}
+}
+
 
 void navigate_to_waypoint(float x, float y)
 {
@@ -205,6 +366,9 @@ void navigate_to_waypoint(float x, float y)
 	// Update the position to the new points
 	points_update(move_distance, MOVE_STATE);
 
+	wait1Msec(2000);
+	PlaySound(soundBeepBeep);
+
 	// Measure with sonar
 	z = SensorValue[sonar];
 	for ( i = 0; i < NUMBER_OF_PARTICLES; i++ )
@@ -217,19 +381,9 @@ void navigate_to_waypoint(float x, float y)
 }
 
 /* End functions related to points */
-/* Start debug functions */
-// Print the last 10 cumulative weight arrays
-void print_10_cwa()
-{
-	writeDebugStream("Printing weights...\n");
-	int i;
-	for (i=NUMBER_OF_PARTICLES-11; i<NUMBER_OF_PARTICLES; ++i)
-		writeDebugStream("wa[%d]: %f - cwa[%d]: %f",i,weightArray[i], i,cumulativeWeightArray[i]);
-	writeDebugStream("-------------\n");
-}
-/* End debug functions */
-/* Start task functions */
 
+/* Start task functions */
+task vehicle_draw_position() {
 	while (true) {
 		wait1Msec(10);
 		nxtSetPixel(20 + (int)(position.x / DISPLAY_SCALE), PRINT_OFFSET_Y + 20 + (int)(position.y / DISPLAY_SCALE));
@@ -261,163 +415,13 @@ task vehicle_compute_position() {
 
 /* End tasks */
 
-float distance(float x1, float y1, float x2, float y2)
-{
-	return sqrt((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
-}
-
-float min(float a, float b)
-{
-	return a < b ? a : b;
-}
-
-float max(float a, float b)
-{
-	return a > b ? a : b;
-}
-
-float stdDev()
-{
-	int array[10] = {41, 41, 41, 40, 41, 41, 42, 41, 41, 41};
-	float sum = 0;
-
-	for(int i = 0; i < 10; i++)
-	{
-		sum += (array[i] - 41) * (array[i] - 41);
-	}
-
-	return sqrt(1.0/10 * sum);;
-}
-
-float calculate_likelihood(float x, float y, float theta, float z)
-{
-	float x2 = x + 3 * cos(theta), y2 = y + 3 * sin(theta);
-	int closestWallIndex = -1;
-	float shortestDistance = 0;
-
-	//find wall intersection
-	for (int i = 0; i < NUMBER_OF_WALLS; i++)
-	{
-
-		float x3 = wallAxArray[i], y3 = wallAyArray[i];
-		float x4 = wallBxArray[i], y4 = wallByArray[i];
-		float px = ((x*y2 - y*x2) * (x3 - x4) - (x-x2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
-		float py = ((x*y2 - y*x2) * (y3 - y4) - (y-y2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
-		//writeDebugStream("bla: %d, %d, %d, %d", x3, y3, x4, y4);
-
-		if(! (px >= min(x3,x4) && px <= max(x3,x4) && py >= min(y3,y4) && py <= max(y3,y4)))
-			continue;
-
-		if(closestWallIndex == -1) {
-			closestWallIndex = i;
-			shortestDistance = distance(x,y,px,py);
-	  } else {
-	  	float currentDistance = distance(x,y,px,py);
-	  	if(currentDistance < shortestDistance) {
-	  		closestWallIndex = i;
-	  		shortestDistance = currentDistance;
-	  	}
-	  }
-	}
-
-	//find expected depth measurement m
-	// m = shortestDistance
-
-	//difference m - z = likelihood value (gaussian model)
-	float likelihood = exp(-pow(z-shortestDistance, 2) / (2 * pow(stdDev(), 2)));
-
-	//check incidence angle to see if sonar reading is valid
-	/*if(incidenceAngle() > 50)
-		return -1;*/
-
-	return likelihood;
-
-}
 
 
-void calculate_cumulative_array()
-{
-	int i,j;
-	// Creating the cumulative Weight Array
-	for (i=0; i<NUMBER_OF_PARTICLES; ++i)
-		for(j=0; j<= i; ++j)
-			cumulativeWeightArray[i] += weightArray[j];
-	print_10_cwa();
-}
 
-void normalise_weight_array ()
-{
-	print_10_cwa ();
 
-	int i;
-	float sum = 0;
 
-	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
-		sum += weightArray[i];
 
-	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
-		weightArray[i] /= sum;
 
-	print_10_cwa ();
-}
-
-int binary_search (float target)
-{
-	int begin = 0;
-	int end = NUMBER_OF_PARTICLES - 1;
-	int mid;
-
-	while (begin <= end)
-	{
-		mid = (begin + end) / 2;
-		if (target > cumulativeWeightArray[mid])
-			begin = mid + 1;
-		else if (target < cumulativeWeightArray[mid])
-			end = mid - 1;
-		else
-			return mid;
-	}
-
-	return begin;
-}
-
-void resample()
-{
-	// Normalise weight array
-	normalise_weight_array ();
-
-	// Calculate cumulative array
-	calculate_cumulative_array ();
-
-	// Reset weights to 1/N
-	int i;
-	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
-		weightArray[i] = 1/NUMBER_OF_PARTICLES;
-
-	// Resample
-	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
-	{
-		// Generate random number between 0 and 1
-		unsigned int random100 = rand() % 100;
-		float random1 = random100 / 100;
-
-		// Search value of random1 in cumulativeWeightArray
-		int index = binary_search (random1);
-
-		// Copy new particle
-		xArrayCopy[index] = xArray[index];
-		yArrayCopy[index] = yArray[index];
-	  thetaArrayCopy[index] = thetaArray[index];
-	}
-
-	// Update spacial distribution
-	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
-	{
-		xArray[i] = xArrayCopy[i];
-		yArray[i] = yArrayCopy[i];
-		thetaArray[i] = thetaArrayCopy[i];
-	}
-}
 
 
 void set_starting_position(float x, float y, float theta)
@@ -442,11 +446,12 @@ task main() {
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
 
-	set_starting_positions(84, 30, 0);
+	bPlaySounds = true;
+	set_starting_position(84.0, 30.0, 0.0);
 
 	int noWaypoints = 9;
-	int waypointXarray[noWaypoints] = {84, 180, 180, 126, 126, 126, 30, 84, 84};
-	int waypointYarray[noWaypoints] = {30,  30,  54,  54, 168, 126, 54, 54, 30};
+	int waypointXarray[9] = {84, 180, 180, 126, 126, 126, 30, 84, 84};
+	int waypointYarray[9] = {30,  30,  54,  54, 168, 126, 54, 54, 30};
 
 	StartTask(vehicle_compute_position);
 	StartTask(vehicle_draw_position);
