@@ -241,26 +241,89 @@ task vehicle_compute_position() {
 
 /* End tasks */
 
+float distance(float x1, float y1, float x2, float y2)
+{
+	return sqrt((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
+}
+
+float min(float a, float b)
+{
+	return a < b ? a : b;
+}
+
+float max(float a, float b)
+{
+	return a > b ? a : b;
+}
+
+float stdDev()
+{
+	int array[] = {41, 41, 41, 40, 41, 41, 42, 41, 41, 41};
+	float sum = 0;
+
+	for(int i = 0; i < 10; i++)
+	{
+		sum += (array[i] - 41) * (array[i] - 41);
+	}
+
+	//float rad = sqrt(1.0/10 * sum);
+	//writeDebugStream("selmi: %f", rad);
+	return sqrt(1.0/10 * sum);;
+}
 
 float calculate_likelihood(float x, float y, float theta, float z)
 {
-	int i = 0, mind = 0;
+	float x2 = x + 3 * cos(theta), y2 = y + 3 * sin(theta);
+	int closestWallIndex = -1;
+	float shortestDistance = 0;
+
 	//find wall intersection
-	for (i = 0; i < NUMBER_OF_WALLS; i++)
+	for (int i = 0; i < NUMBER_OF_WALLS; i++)
 	{
 
+		float x3 = wallAxArray[i], y3 = wallAyArray[i];
+		float x4 = wallBxArray[i], y4 = wallByArray[i];
+		float px = ((x*y2 - y*x2) * (x3 - x4) - (x-x2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
+		float py = ((x*y2 - y*x2) * (y3 - y4) - (y-y2) * (x3*y4 - y3*x4)) / ((x - x2) * (y3 - y4) - (y - y2) * (x3 - x4));
+		//writeDebugStream("bla: %d, %d, %d, %d", x3, y3, x4, y4);
 
+		if(! (px >= min(x3,x4) && px <= max(x3,x4) && py >= min(y3,y4) && py <= max(y3,y4)))
+			continue;
+
+		if(closestWallIndex == -1) {
+			closestWallIndex = i;
+			shortestDistance = distance(x,y,px,py);
+	  } else {
+	  	float currentDistance = distance(x,y,px,py);
+	  	if(currentDistance < shortestDistance) {
+	  		closestWallIndex = i;
+	  		shortestDistance = currentDistance;
+	  	}
+	  }
 	}
 
 	//find expected depth measurement m
+	// m = shortestDistance
 
 	//difference m - z = likelihood value (gaussian model)
+	float likelihood = exp(-pow(z-shortestDistance, 2) / (2 * pow(stdDev(), 2)));
 
 	//check incidence angle to see if sonar reading is valid
+	/*if(incidenceAngle() > 50)
+		return -1;*/
+
+	return likelihood;
+}
+
+task main() {
+	stdDev();
+	wait10Msec(60000);
+
 }
 
 
-task main() {
+/*task main() {
+
 
 	clearDebugStream();
 	position.x = 0;
@@ -273,6 +336,7 @@ task main() {
 	StartTask(vehicle_draw_position);
 
 	navigate_to_waypoint(50,50);
+	//calculate_likelihood(0, 0, 0, 0);
 	navigate_to_waypoint(50,-20);
 	navigate_to_waypoint(0,0);
 
@@ -281,4 +345,4 @@ task main() {
 
   wait10Msec(60000); // wait 1MIN
 
-}
+}*/
