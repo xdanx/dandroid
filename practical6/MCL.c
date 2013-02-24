@@ -207,6 +207,17 @@ void navigate_to_waypoint(float x, float y)
 }
 
 /* End functions related to points */
+/* Start debug functions */
+// Print the last 10 cumulative weight arrays
+void print_10_cwa()
+{
+	writeDebugStream("Printing weights...\n");
+	int i;
+	for (i=NUMBER_OF_PARTICLES-11; i<NUMBER_OF_PARTICLES; ++i)
+		writeDebugStream("wa[%d]: %f - cwa[%d]: %f",i,weightArray[i], i,cumulativeWeightArray[i]);
+	writeDebugStream("-------------\n");
+}
+/* End debug functions */
 /* Start task functions */
 
 task vehicle_draw_position() {
@@ -252,11 +263,95 @@ float calculate_likelihood(float x, float y, float theta, float z)
 
 	}
 
-	//find expected depth measurement m
+}
 
-	//difference m - z = likelihood value (gaussian model)
 
-	//check incidence angle to see if sonar reading is valid
+void calculate_cumulative_array()
+{
+	int i,j;
+	// Creating the cumulative Weight Array
+	for (i=0; i<NUMBER_OF_PARTICLES; ++i)
+		for(j=0; j<= i; ++j)
+			cumulativeWeightArray[i] += weightArray[j];
+
+
+	print_10_cwa();
+
+
+}
+
+void normalise_weight_array ()
+{
+	print_10_cwa ();
+
+	int i;
+	float sum = 0;
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		sum += weightArray[i];
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] /= sum;
+
+	print_10_cwa ();
+}
+
+int binary_search (float target)
+{
+	int begin = 0;
+	int end = NUMBER_OF_PARTICLES - 1;
+	int mid;
+
+	while (begin <= end)
+	{
+		mid = (begin + end) / 2;
+		if (target > cumulativeWeightArray[mid])
+			begin = mid + 1;
+		else if (target < cumulativeWeightArray[mid])
+			end = mid - 1;
+		else
+			return mid;
+	}
+
+	return begin;
+}
+
+void resample()
+{
+	// Normalise weight array
+	normalise_weight_array ();
+
+	// Calculate cumulative array
+	calculate_cumulative_array ();
+
+	// Reset weights to 1/N
+	int i;
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] = 1/NUMBER_OF_PARTICLES;
+
+	// Resample
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		// Generate random number between 0 and 1
+		unsigned int random100 = rand() % 100;
+		float random1 = random100 / 100;
+
+		// Search value of random1 in cumulativeWeightArray
+		int index = binary_search (random1);
+
+		// Copy new particle
+		xArrayCopy[index] = xArray[index];
+		yArrayCopy[index] = yArray[index];
+	  thetaArrayCopy[index] = thetaArray[index];
+	}
+
+	// Update spacial distribution
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		xArray[i] = xArrayCopy[i];
+		yArray[i] = yArrayCopy[i];
+		thetaArray[i] = thetaArrayCopy[i];
+	}
 }
 
 
