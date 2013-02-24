@@ -436,17 +436,13 @@ void set_starting_position(float x, float y, float theta)
 
 }
 
-
-
-
-/*task main() {
+task main() {
 
 	clearDebugStream();
-	position.x = 0;
-	position.y = 0;
-	position.angle = 0;
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
+
+	set_starting_positions(84, 30, 0);
 
 	int noWaypoints = 9;
 	int waypointXarray[noWaypoints] = {84, 180, 180, 126, 126, 126, 30, 84, 84};
