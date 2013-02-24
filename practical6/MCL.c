@@ -94,16 +94,15 @@ void position_add_angle(Position* p, float deltaAngle) {
 
 void rotate(float degs) {
 	robotState = ROTATE_STATE;
-	int dir = 1;
-	if (degs < 0) {
-		dir = -1;
-		degs = -degs;
-	}
 
+	/* Might go wrong, opposite to what we have in our debug msg */
+	int dir = (degs >= 0) - (degs < 0);
   motor[LEFT_WHEEL] 	= dir * ROTATE_POWER;
   motor[RIGHT_WHEEL] 	= -dir * ROTATE_POWER;
-  wait1Msec(degs * 1.0 / 90 * ROTATE_90_TIME);
- 	position_add_angle(position, degs);
+  wait1Msec(abs(degs) / 90 * ROTATE_90_TIME);
+ 	// End here
+
+  position_add_angle(position, degs);
   stop();
 }
 
@@ -173,16 +172,24 @@ void navigate_to_waypoint(float x, float y)
 	float dif_x = x - med_x; // dest - curr_pos
 	float dif_y = y - med_y;
 
-	float rotate_degs = atan(dif_y / dif_x) * 180.0 / PI; // get the nr of degrees we want to turn. But in which direction ?!
+	writeDebugStream("Dif_x: %f, dif_y: %f\n",dif_x, dif_y);
+	float rotate_degs;// = atan(dif_y / dif_x) * 180.0 / PI; // get the nr of degrees we want to turn. But in which direction ?!
 
 	// If both are negative, then we need to add the - to the rotate_degrees
-	if ( dif_x < 0 && dif_y < 0)
-		rotate_degs *= -1;
-	// else, we know for sure that at most one of the values is negative.
-	else if ( dif_x < 0 || dif_y <0 )
-		med_theta *= -1;
-	// else both vals are positive, and we don't tamper anything.
+	if ( dif_x > 0)
+		rotate_degs = atan (dif_y / dif_x);
+	else if (dif_y >=0 && dif_x < 0)
+		rotate_degs = atan( dif_y / dif_x) + PI;
+	else if (dif_y < 0 && dif_x < 0)
+		rotate_degs = atan (dif_y / dif_x) - PI;
+	else if (dif_y > 0 && dif_x == 0)
+		rotate_degs = PI;
+	else if (dif_y < 0 && dif_x == 0)
+		rotate_degs = -PI;
+	else
+		rotate_degs = 0;
 
+	rotate_degs = rotate_degs * 180.0 / PI;
 	rotate_degs = normalize_angle_value(rotate_degs - med_theta);
 	writeDebugStream("Rotate angle: %f\n",rotate_degs);
 
@@ -234,16 +241,9 @@ task vehicle_compute_position() {
 
 /* End tasks */
 
-void move_on_square() {
-}
 
 task main() {
 
-	//move_for_duration(30, 4000);
-
-//	rotate(90);
-
-	//return;
 	clearDebugStream();
 	position.x = 0;
 	position.y = 0;
@@ -254,19 +254,9 @@ task main() {
 	StartTask(vehicle_compute_position);
 	StartTask(vehicle_draw_position);
 
-	int i,j;
-	int loops = 4;
-	int segments = 3;
-	int milage = 0;
-
-	print_10_points();
 	navigate_to_waypoint(50,50);
-	print_10_points();
 	navigate_to_waypoint(50,-20);
-	print_10_points();
 	navigate_to_waypoint(0,0);
-	print_10_points();
-
 
   StopTask(vehicle_compute_position);
   StopTask(vehicle_draw_position);
