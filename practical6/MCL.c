@@ -78,16 +78,13 @@ float normalize_angle_value(float angle)
 	return angle;
 }
 
-
 void position_add_distance(Position* p, float distance) {
-
 	p->x += distance * cosDegrees(p->angle);
 	p->y += distance * sinDegrees(p->angle);
 	return;
 }
 
 void position_add_angle(Position* p, float deltaAngle) {
-
 	//p->angle += deltaAngle;
 	writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
 	p->angle = normalize_angle_value(p->angle + deltaAngle);
@@ -125,7 +122,6 @@ float max(float a, float b)
 	return a > b ? a : b;
 }
 
-
 float calculate_likelihood(float x, float y, float theta, float z)
 {
 	float x2 = x + 3 * cos(theta), y2 = y + 3 * sin(theta);
@@ -145,12 +141,16 @@ float calculate_likelihood(float x, float y, float theta, float z)
 		if(! (px >= min(x3,x4) && px <= max(x3,x4) && py >= min(y3,y4) && py <= max(y3,y4)))
 			continue;
 
-		if(closestWallIndex == -1) {
+		if(closestWallIndex == -1)
+		{
 			closestWallIndex = i;
 			shortestDistance = distance(x,y,px,py);
-	  } else {
+	  }
+	  else
+	  {
 	  	float currentDistance = distance(x,y,px,py);
-	  	if(currentDistance < shortestDistance) {
+	  	if(currentDistance < shortestDistance)
+	  	{
 	  		closestWallIndex = i;
 	  		shortestDistance = currentDistance;
 	  	}
@@ -168,9 +168,7 @@ float calculate_likelihood(float x, float y, float theta, float z)
 		return -1;*/
 
 	return likelihood;
-
 }
-
 
 void print_10_points()
 {
@@ -264,10 +262,8 @@ int binary_search (float target)
 		else
 			return mid;
 	}
-
 	return begin;
 }
-
 
 void resample()
 {
@@ -307,7 +303,6 @@ void resample()
 	}
 }
 
-
 void navigate_to_waypoint(float x, float y)
 {
 	float med_x = 0, med_y = 0, med_theta = 0;
@@ -336,7 +331,7 @@ void navigate_to_waypoint(float x, float y)
 	writeDebugStream("Dif_x: %f, dif_y: %f\n",dif_x, dif_y);
 	float rotate_degs;// = atan(dif_y / dif_x) * 180.0 / PI; // get the nr of degrees we want to turn. But in which direction ?!
 
-	// If both are negative, then we need to add the - to the rotate_degrees
+	// Use of atan2
 	if ( dif_x > 0)
 		rotate_degs = atan (dif_y / dif_x);
 	else if (dif_y >=0 && dif_x < 0)
@@ -379,7 +374,6 @@ void navigate_to_waypoint(float x, float y)
 	// Resampling
 	resample();
 }
-
 /* End functions related to points */
 
 /* Start task functions */
@@ -412,17 +406,7 @@ task vehicle_compute_position() {
 		rightEncodings = curRight;
 	}
 }
-
 /* End tasks */
-
-
-
-
-
-
-
-
-
 
 void set_starting_position(float x, float y, float theta)
 {
@@ -437,11 +421,9 @@ void set_starting_position(float x, float y, float theta)
 		yArray[i] = y;
 		thetaArray[i] = theta;
 	}
-
 }
 
 task main() {
-
 	clearDebugStream();
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
