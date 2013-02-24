@@ -419,6 +419,24 @@ task main() {
 
 }
 
+void set_starting_position(float x, float y, float theta)
+{
+	position.x = x;
+	position.y = y;
+	position.angle = theta;
+
+	int i;
+	for (i=0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		xArray[i] = x;
+		yArray[i] = y;
+		thetaArray[i] = theta;
+	}
+
+}
+
+
+
 
 /*task main() {
 
