@@ -242,6 +242,24 @@ task vehicle_compute_position() {
 /* End tasks */
 
 
+float calculate_likelihood(float x, float y, float theta, float z)
+{
+	int i = 0, mind = 0;
+	//find wall intersection
+	for (i = 0; i < NUMBER_OF_WALLS; i++)
+	{
+
+
+	}
+
+	//find expected depth measurement m
+
+	//difference m - z = likelihood value (gaussian model)
+
+	//check incidence angle to see if sonar reading is valid
+}
+
+
 task main() {
 
 	clearDebugStream();
