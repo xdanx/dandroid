@@ -258,7 +258,7 @@ float max(float a, float b)
 
 float stdDev()
 {
-	int array[] = {41, 41, 41, 40, 41, 41, 42, 41, 41, 41};
+	int array[10] = {41, 41, 41, 40, 41, 41, 42, 41, 41, 41};
 	float sum = 0;
 
 	for(int i = 0; i < 10; i++)
@@ -266,8 +266,6 @@ float stdDev()
 		sum += (array[i] - 41) * (array[i] - 41);
 	}
 
-	//float rad = sqrt(1.0/10 * sum);
-	//writeDebugStream("selmi: %f", rad);
 	return sqrt(1.0/10 * sum);;
 }
 
@@ -315,16 +313,14 @@ float calculate_likelihood(float x, float y, float theta, float z)
 	return likelihood;
 }
 
-task main() {
+/*task main() {
 	stdDev();
 	wait10Msec(60000);
 
-}
+}*/
 
 
-/*task main() {
-
-
+task main() {
 	clearDebugStream();
 	position.x = 0;
 	position.y = 0;
@@ -332,17 +328,19 @@ task main() {
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
 
+	int noWaypoints = 9;
+	int waypointXarray[noWaypoints] = {84, 180, 180, 126, 126, 126, 30, 84, 84};
+	int waypointYarray[noWaypoints] = {30,  30,  54,  54, 168, 126, 54, 54, 30};
+
 	StartTask(vehicle_compute_position);
 	StartTask(vehicle_draw_position);
 
-	navigate_to_waypoint(50,50);
-	//calculate_likelihood(0, 0, 0, 0);
-	navigate_to_waypoint(50,-20);
-	navigate_to_waypoint(0,0);
+	for(int i = 0; i < noWaypoints; i++) {
+		navigate_to_waypoint(waypointXarray[i], waypointYarray[i]);
+	}
 
   StopTask(vehicle_compute_position);
   StopTask(vehicle_draw_position);
 
   wait10Msec(60000); // wait 1MIN
-
-}*/
+}
