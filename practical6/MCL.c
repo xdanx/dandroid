@@ -88,7 +88,7 @@ void position_add_angle(Position* p, float deltaAngle) {
 
 	//p->angle += deltaAngle;
 	writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
-	p->angle = normalize_angle_value(p->angle + deltaAngle;
+	p->angle = normalize_angle_value(p->angle + deltaAngle);
 	writeDebugStream("Position_add_angle: Pos angle:%f\n",p->angle);
 }
 
@@ -150,7 +150,7 @@ void points_update(float value, int state) {
 void navigate_to_waypoint(float x, float y)
 {
 	float med_x = 0, med_y = 0, med_theta = 0;
-	float weight = 1,i;
+	float i;
 
 	// estimate current posistion
 	for (i=0; i < NUMBER_OF_PARTICLES; ++i)
@@ -207,6 +207,17 @@ void navigate_to_waypoint(float x, float y)
 }
 
 /* End functions related to points */
+/* Start debug functions */
+// Print the last 10 cumulative weight arrays
+void print_10_cwa()
+{
+	writeDebugStream("Printing weights...\n");
+	int i;
+	for (i=NUMBER_OF_PARTICLES-11; i<NUMBER_OF_PARTICLES; ++i)
+		writeDebugStream("wa[%d]: %f - cwa[%d]: %f",i,weightArray[i], i,cumulativeWeightArray[i]);
+	writeDebugStream("-------------\n");
+}
+/* End debug functions */
 /* Start task functions */
 
 task vehicle_draw_position() {
@@ -311,14 +322,93 @@ float calculate_likelihood(float x, float y, float theta, float z)
 		return -1;*/
 
 	return likelihood;
+
 }
 
-/*task main() {
-	stdDev();
-	wait10Msec(60000);
 
-}*/
+void calculate_cumulative_array()
+{
+	int i,j;
+	// Creating the cumulative Weight Array
+	for (i=0; i<NUMBER_OF_PARTICLES; ++i)
+		for(j=0; j<= i; ++j)
+			cumulativeWeightArray[i] += weightArray[j];
+	print_10_cwa();
+}
 
+void normalise_weight_array ()
+{
+	print_10_cwa ();
+
+	int i;
+	float sum = 0;
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		sum += weightArray[i];
+
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] /= sum;
+
+	print_10_cwa ();
+}
+
+int binary_search (float target)
+{
+	int begin = 0;
+	int end = NUMBER_OF_PARTICLES - 1;
+	int mid;
+
+	while (begin <= end)
+	{
+		mid = (begin + end) / 2;
+		if (target > cumulativeWeightArray[mid])
+			begin = mid + 1;
+		else if (target < cumulativeWeightArray[mid])
+			end = mid - 1;
+		else
+			return mid;
+	}
+
+	return begin;
+}
+
+void resample()
+{
+	// Normalise weight array
+	normalise_weight_array ();
+
+	// Calculate cumulative array
+	calculate_cumulative_array ();
+
+	// Reset weights to 1/N
+	int i;
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+		weightArray[i] = 1/NUMBER_OF_PARTICLES;
+
+	// Resample
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		// Generate random number between 0 and 1
+		unsigned int random100 = rand() % 100;
+		float random1 = random100 / 100;
+
+		// Search value of random1 in cumulativeWeightArray
+		int index = binary_search (random1);
+
+		// Copy new particle
+		xArrayCopy[index] = xArray[index];
+		yArrayCopy[index] = yArray[index];
+	  thetaArrayCopy[index] = thetaArray[index];
+	}
+
+	// Update spacial distribution
+	for (i = 0; i < NUMBER_OF_PARTICLES; ++i)
+	{
+		xArray[i] = xArrayCopy[i];
+		yArray[i] = yArrayCopy[i];
+		thetaArray[i] = thetaArrayCopy[i];
+	}
+}
 
 task main() {
 	clearDebugStream();

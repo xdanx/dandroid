@@ -10,7 +10,9 @@ float yArray[NUMBER_OF_PARTICLES];
 float thetaArray[NUMBER_OF_PARTICLES];
 float weightArray[NUMBER_OF_PARTICLES];
 float cumulativeWeightArray[NUMBER_OF_PARTICLES];
-
+float xArrayCopy[NUMBER_OF_PARTICLES];
+float yArrayCopy[NUMBER_OF_PARTICLES];
+float thetaArrayCopy[NUMBER_OF_PARTICLES];
 
 
 // Definitions of walls
