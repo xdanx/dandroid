@@ -1,9 +1,9 @@
 /* constants */
-int ROTATE_90_TIME = 1090;
+int ROTATE_90_TIME = 1108;
 int ROTATE_POWER = 25;
-int MOVE_POWER = 10;
+int MOVE_POWER = 20;
 
-const float K = 0.000475; //0.00036; // for distance in cm, and time in milliseconds
+const float K = 0.000466; //0.00036; // for distance in cm, and time in milliseconds
 const float ENCODINGS_PER_CM = 20.525;
 const float ENCODINGS_PER_DEGREE = 3;
 
@@ -21,5 +21,5 @@ int GUN = motorB;
 #define PRINT_OFFSET_X 15
 #define PRINT_OFFSET_Y 15
 
-#define DEBUG true
+#define DEBUG false
 /* end constants */
