@@ -78,16 +78,13 @@ float normalize_angle_value(float angle)
 	return angle;
 }
 
-
 void position_add_distance(Position* p, float distance) {
-
 	p->x += distance * cosDegrees(p->angle);
 	p->y += distance * sinDegrees(p->angle);
 	return;
 }
 
 void position_add_angle(Position* p, float deltaAngle) {
-
 	if (DEBUG)
 		writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
 	p->angle = normalize_angle_value(p->angle + deltaAngle);
@@ -128,6 +125,7 @@ float max(float a, float b)
 	return a > b ? a : b;
 }
 
+
 int binary_search (float target)
 {
 	int begin = 0;
@@ -147,7 +145,6 @@ int binary_search (float target)
 
 	return begin;
 }
-
 
 void print_10_points()
 {
@@ -323,7 +320,6 @@ void resample()
 	// We're done!
 }
 
-
 void navigate_to_waypoint(float x, float y)
 {
 	float med_x = 0, med_y = 0, med_theta = 0;
@@ -380,7 +376,7 @@ void navigate_to_waypoint(float x, float y)
 	float rotate_degs;
 	// get the nr of degrees we want to turn. But in which direction ?!
 
-	// If both are negative, then we need to add the - to the rotate_degrees
+	// Use of atan2
 	if ( dif_x > 0)
 		rotate_degs = atan (dif_y / dif_x);
 	else if (dif_y >=0 && dif_x < 0)
@@ -438,6 +434,7 @@ void navigate_to_waypoint(float x, float y)
 
 }
 
+
 void set_starting_position(float x, float y, float theta)
 {
 	position.x = x;
@@ -454,8 +451,6 @@ void set_starting_position(float x, float y, float theta)
 		weightArray[i] = 1.0 / NUMBER_OF_PARTICLES;
 	}
 }
-
-
 /* End functions related to points */
 
 /* Start task functions
@@ -489,11 +484,9 @@ task vehicle_compute_position() {
 		rightEncodings = curRight;
 	}
 }
-
 /* End tasks */
 
 task main() {
-
 	clearDebugStream();
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;

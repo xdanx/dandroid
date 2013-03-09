@@ -1,6 +1,6 @@
 
 /* constants */
-int ROTATE_90_TIME = 1210;
+int ROTATE_90_TIME = 1108;
 int ROTATE_POWER = 25;
 int MOVE_POWER = 10;
 const int DISPLAY_SCALE = 10;
@@ -91,10 +91,14 @@ void shoot()
   wait1Msec(4000);
 }
 
+// 0.00045
+// 0.000468
+// 0.000461
 
 void move_k(int speed, int time)
 {
 	motor[motorA] = speed;
+	motor[motorC] = speed;
 	wait1Msec(time);
 	stop();
 }
@@ -155,7 +159,13 @@ task drawPosition() {
 	}
 }
 
-task main() {
+task main()
+{
+	//move_k(30, 4000);
+	rotate(90);
+}
+
+/*task main() {
 	position.x = 0;
 	position.y = 0;
 	position.angle = 0;
@@ -195,4 +205,4 @@ task main() {
   StopTask(computePosition);
   wait10Msec(6000); // wait 1MIN
   StopTask(drawPosition);
-}
+}*/
