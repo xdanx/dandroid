@@ -16,7 +16,7 @@ int SONAR_M = motorB;
 int SONAR_SPEED_SLOW = 10;
 int SONAR_SPEED_FAST = 50;
 
-int DEFAULT_POWER = 100;
+int DEFAULT_POWER = 90;
 
 int WALL_COUNT = 20;
 

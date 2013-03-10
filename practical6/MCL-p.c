@@ -78,13 +78,16 @@ float normalize_angle_value(float angle)
 	return angle;
 }
 
+
 void position_add_distance(Position* p, float distance) {
+
 	p->x += distance * cosDegrees(p->angle);
 	p->y += distance * sinDegrees(p->angle);
 	return;
 }
 
 void position_add_angle(Position* p, float deltaAngle) {
+
 	if (DEBUG)
 		writeDebugStream("Position_add_angle: Pos angle:%f adding angle:%f\n",p->angle, deltaAngle);
 	p->angle = normalize_angle_value(p->angle + deltaAngle);
@@ -95,7 +98,6 @@ void position_add_angle(Position* p, float deltaAngle) {
 void rotate(float degs) {
 	stop();
 	robotState = ROTATE_STATE;
-	//PlaySound(soundDownwardTones);
 
 	/* Might go wrong, opposite to what we have in our debug msg */
 	int dir = (degs >= 0) - (degs < 0);
@@ -126,25 +128,40 @@ float max(float a, float b)
 }
 
 
-int binary_search (float target)
+float calculate_likelihood(float x, float y, float theta, float z)
 {
-	int begin = 0;
-	int end = NUMBER_OF_PARTICLES - 1;
-	int mid;
 
-	while (begin <= end)
+	int closestWallIndex = -1;
+	float shortestDistance = 20000.0;
+	float m;
+	int i = 0;
+
+	for (i = 0; i < NUMBER_OF_WALLS; i++)
 	{
-		mid = (begin + end) / 2;
-		if (target > cumulativeWeightArray[mid])
-			begin = mid + 1;
-		else if (target < cumulativeWeightArray[mid])
-			end = mid - 1;
-		else
-			return mid;
+		float a_x = wallAxArray[i], a_y = wallAyArray[i];
+		float b_x = wallBxArray[i], b_y = wallByArray[i];
+		m = ((b_y - a_y)*(a_x - x) - (b_x - a_x)*(a_y - y)) / ((b_y - a_y)*cosDegrees(theta) - (b_x - a_x)*sinDegrees(theta));
+
+		float px = x + m*cosDegrees(theta);
+		float py = y + m*sinDegrees(theta);
+
+		if( px >= min(a_x,b_x) && px <= max(a_x,b_x) && py >= min(a_y,b_y) && py <= max(a_y,b_y) && m >= 0)
+		{
+			if ( m <= shortestDistance )
+			{
+				shortestDistance = m;
+				closestWallIndex = i;
+			}
+		}
 	}
 
-	return begin;
+	//writeDebugStream("[calculate_likelihood]: shortestDistance: %f \n", shortestDistance);
+	//wait1Msec(10);
+	float likelihood = exp(-pow(z - shortestDistance, 2) * 1.0 / (2 * pow(0.44, 2))) + 0.1;
+	return likelihood;
+
 }
+
 
 void print_10_points()
 {
@@ -245,37 +262,26 @@ void normalise_weight_array ()
 		writeDebugStream("End normalise weight array\n");
 }
 
-float calculate_likelihood(float x, float y, float theta, float z)
+int binary_search (float target)
 {
+	int begin = 0;
+	int end = NUMBER_OF_PARTICLES - 1;
+	int mid;
 
-	int closestWallIndex = -1;
-	// We take into consideration the greatest distance
-	float shortestDistance = 20000.0;
-	float m;
-	int i = 0;
-
-	for (i = 0; i < NUMBER_OF_WALLS; i++)
+	while (begin <= end)
 	{
-		float a_x = wallAxArray[i], a_y = wallAyArray[i];
-		float b_x = wallBxArray[i], b_y = wallByArray[i];
-		m = ((b_y - a_y)*(a_x - x) - (b_x - a_x)*(a_y - y)) / ((b_y - a_y)*cosDegrees(theta) - (b_x - a_x)*sinDegrees(theta));
-
-		float px = x + m*cosDegrees(theta);
-		float py = y + m*sinDegrees(theta);
-
-		if( px >= min(a_x,b_x) && px <= max(a_x,b_x) && py >= min(a_y,b_y) && py <= max(a_y,b_y) && m >= 0)
-		{
-			if ( m <= shortestDistance )
-			{
-				shortestDistance = m;
-				closestWallIndex = i;
-			}
-		}
+		mid = (begin + end) / 2;
+		if (target > cumulativeWeightArray[mid])
+			begin = mid + 1;
+		else if (target < cumulativeWeightArray[mid])
+			end = mid - 1;
+		else
+			return mid;
 	}
-	float likelihood = exp(-pow(z - shortestDistance, 2) * 1.0 / (2 * pow(0.44, 2))) + 0.1;
-	return likelihood;
 
+	return begin;
 }
+
 
 void resample()
 {
@@ -304,6 +310,7 @@ void resample()
 		int index = binary_search (random1);
 		if (index == 100 )
 			index = 99;
+		//writeDebugStream("[Resample] random_nr: %d, random1: %f, BS: %d\n",random_nr, random1 ,index);
 		// Copy new particle
 		xArrayCopy[i] = xArray[index];
 		yArrayCopy[i] = yArray[index];
@@ -317,50 +324,33 @@ void resample()
 		yArray[i] = yArrayCopy[i];
 		thetaArray[i] = thetaArrayCopy[i];
 	}
-	// We're done!
 }
+
 
 void navigate_to_waypoint(float x, float y)
 {
 	float med_x = 0, med_y = 0, med_theta = 0;
 	float i, z;
 
+	writeDebugStream("Going towards point %f, %f\n",x,y);
+
 	if (DEBUG)
 	{
-		writeDebugStream("Going towards point %f, %f\n",x,y);
 		print_10_points();
 		print_10_cwa();
 	}
 
-	float cosSum = 0, sinSum = 0;
 	// estimate current posistion
 	for (i=0; i < NUMBER_OF_PARTICLES; ++i)
 	{
 		med_x += xArray[i]*weightArray[i];
 		med_y += yArray[i]*weightArray[i];
-		//med_theta += thetaArray[i] * weightArray[i];
-
-		float theta = thetaArray[i];
-		cosSum += cosDegrees(theta) * weightArray[i];
-		sinSum += sinDegrees(theta) *weightArray[i];
+		med_theta += thetaArray[i] * weightArray[i];
 	}
+	med_theta = thetaArray[42]; // Game of life
 
-	// Transform back from vector to angle
-	if (cosSum > 0)
-		med_theta = atan (sinSum / cosSum);
-	else if (sinSum >=0 && cosSum < 0)
-		med_theta = atan(sinSum / cosSum) + PI;
-	else if (sinSum < 0 && cosSum < 0)
-		med_theta = atan (sinSum / cosSum) - PI;
-	else if (sinSum > 0 && cosSum == 0)
-		med_theta = PI;
-	else if (sinSum < 0 && cosSum == 0)
-		med_theta = -PI;
-	else
-		med_theta = 0;
+	writeDebugStream("Averages: x: %f y:%f theta:%f\n", med_x, med_y, med_theta);
 
-	if (DEBUG)
-		writeDebugStream("Averages: x: %f y:%f theta:%f\n", med_x, med_y, med_theta);
 
 	// calculate difference
 	float dif_x = x - med_x; // dest - curr_pos
@@ -373,10 +363,9 @@ void navigate_to_waypoint(float x, float y)
 		dif_y = 0.0;
 
 	writeDebugStream("Dif_x: %f, dif_y: %f\n",dif_x, dif_y);
-	float rotate_degs;
-	// get the nr of degrees we want to turn. But in which direction ?!
+	float rotate_degs;// = atan(dif_y / dif_x) * 180.0 / PI; // get the nr of degrees we want to turn. But in which direction ?!
 
-	// Use of atan2
+	// If both are negative, then we need to add the - to the rotate_degrees
 	if ( dif_x > 0)
 		rotate_degs = atan (dif_y / dif_x);
 	else if (dif_y >=0 && dif_x < 0)
@@ -394,20 +383,15 @@ void navigate_to_waypoint(float x, float y)
 	rotate_degs = normalize_angle_value(rotate_degs - med_theta);
 	writeDebugStream("Rotate angle: %f\n",rotate_degs);
 
-	// Print 10 points before rotation
-	if (DEBUG)
-		print_10_points();
+	print_10_points();
 	// Rotate towards the correct position
 	rotate(rotate_degs);
 	points_update(rotate_degs, ROTATE_STATE);
-	// Print 10 points after rotation , to make sure that we rotate correctly
-	if (DEBUG)
-		print_10_points();
+	print_10_points();
 
 	// move forward
 	float move_distance = sqrt(dif_x * dif_x + dif_y * dif_y);
-	if (DEBUG)
-		writeDebugStream("Moving distance: %f\n", move_distance);
+	writeDebugStream("Moving distance: %f\n", move_distance);
 	move_forward(MOVE_POWER, move_distance);
 
 	// Update the position to the new points
@@ -416,24 +400,24 @@ void navigate_to_waypoint(float x, float y)
 	//wait1Msec(2000);
 	PlaySound(soundBeepBeep);
 
-	// Sonar measurement!
+	// Measure with sonar
 	z = SensorValue[sonar];
+	writeDebugStream("[Move_to_waypoint] %f\n",z);
+	writeDebugStream("Before Calculate likelihood\n");
+	print_10_cwa();
 	for ( i = 0; i < NUMBER_OF_PARTICLES; i++ )
 	{
 		weightArray[i] = calculate_likelihood(xArray[i], yArray[i], thetaArray[i], z);
 	}
 
-	// Resampling after calculating likelihood
+	writeDebugStream("Before Resampling\n");
+	print_10_cwa();
+	// Resampling
 	resample();
-	if (DEBUG)
-	{
-		writeDebugStream("After Resampling\n");
-		print_10_cwa
-		();
-	}
+	writeDebugStream("After Resampling\n");
+	print_10_cwa();
 
 }
-
 
 void set_starting_position(float x, float y, float theta)
 {
@@ -451,16 +435,17 @@ void set_starting_position(float x, float y, float theta)
 		weightArray[i] = 1.0 / NUMBER_OF_PARTICLES;
 	}
 }
+
+
 /* End functions related to points */
 
-/* Start task functions
+/* Start task functions */
 task vehicle_draw_position() {
 	while (true) {
 		wait1Msec(10);
 		nxtSetPixel(20 + (int)(position.x / DISPLAY_SCALE), PRINT_OFFSET_Y + 20 + (int)(position.y / DISPLAY_SCALE));
 	}
 }
-*/
 
 task vehicle_compute_position() {
 	while (true) {
@@ -484,9 +469,11 @@ task vehicle_compute_position() {
 		rightEncodings = curRight;
 	}
 }
+
 /* End tasks */
 
 task main() {
+
 	clearDebugStream();
 	nMotorEncoder[LEFT_WHEEL] = 0;
 	nMotorEncoder[RIGHT_WHEEL] = 0;
@@ -534,8 +521,12 @@ task main() {
 	// From here, move in 20 cm ranges
 	navigate_to_waypoint(30, 54);
 	drawParticles();
+
+	navigate_to_waypoint(54, 54);
+	drawParticles();
 	navigate_to_waypoint(84, 54);
 	drawParticles();
+	// Finished!
 	navigate_to_waypoint(84, 30);
 	drawParticles();
 

@@ -85,6 +85,16 @@ void step_out_of_cubicle() {
 	}
 }
 
+void droid_exit_cube()
+{
+	droid_move(-30);
+	while (true) {
+		wait1Msec(30);
+		int reading = read_sonar();
+		if (reading > (TUNNEL_WIDTH +  TUNNEL_WIDTH / 2)) break; // you are out in the tunnel
+	}
+
+}
 
 
 // PRE: sonar pointing forward

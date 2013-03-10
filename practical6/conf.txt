@@ -5,7 +5,7 @@ int MOVE_POWER = 20;
 
 const float K = 0.000466; //0.00036; // for distance in cm, and time in milliseconds
 const float ENCODINGS_PER_CM = 20.525;
-const float ENCODINGS_PER_DEGREE = 3;
+//const float ENCODINGS_PER_DEGREE = 3;
 
 int LEFT_WHEEL = motorA;
 int RIGHT_WHEEL = motorC;
