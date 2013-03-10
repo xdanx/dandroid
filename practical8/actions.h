@@ -59,7 +59,7 @@ void find_cubicle_exit() {
 	nxtDisplayString(1, "Sonar : %d", rot_degs);
 
 	// rotate robot in the same direction and reposition the sonar
-	sonar_rotate_encod(0); // async
+	sonar_move_at_async(0, true); // in parallel
 	droid_rotate(rot_degs); //sync
 
 	wait1Msec(10000);
@@ -76,26 +76,15 @@ void step_out_of_cubicle() {
 	}
 }
 
-void sonar_fix_at_sync(int encodings_value, bool run_slow) {
-	//while(nMotorEncoder[])
-	int current = nMotorEncoder[SONAR_M];
-	int rotation_dir = encodings_value - current;
-	rotation_dir = rotation_dir / abs(rotation_dir);
-	if (run_slow)
-  	sonar_set_rotation(rotation_dir, SONAR_SPEED_SLOW);
- 	else
- 		sonar_set_rotation(rotation_dir, SONAR_SPEED_FAST);
-	while (nMotorEncoder[SONAR_M] != encodings_value) {}
-	sonar_stop();
-}
+
 
 // PRE: sonar pointing forward
 void get_left_right(int* left, int* right) {
-	sonar_rotate_encod_sync(90);
+	sonar_move_at_sync(90, false);
 	nxtDisplayString(1, "Rotation : %d", nMotorEncoder[SONAR_M]);
 	wait1Msec(100);
 	*right = read_sonar();
-	sonar_rotate_encod_sync(-180);
+	sonar_move_at_sync(-90, false);
 	nxtDisplayString(1, "Rotation : %d", nMotorEncoder[SONAR_M]);
 	wait1Msec(100);
 	*left = read_sonar();
