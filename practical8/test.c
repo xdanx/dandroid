@@ -35,7 +35,7 @@ void follow_wall(int distance, int dir, bool skip) {
 
 	int wheel, diff = 0, current_distance = 0, correction = 0;
 	int count = 0;
-	float k = 1.2;
+	float k = 8;
 
 	current_distance = SensorValue[sonar];
 
@@ -60,10 +60,14 @@ void follow_wall(int distance, int dir, bool skip) {
 
 		if(abs(diff) <= 2) {
 			diff =  0;
+		} else if(diff < 0) {
+			diff += 2;
+		} else if(diff > 0) {
+			diff -= 2;
 		}
 
 		// set power of motor to turn towards wall
-		correction = (int) (-k * diff);
+		correction = (int) (k * diff);
 
 		motor[RIGHT_WHEEL] -= correction;
 		motor[LEFT_WHEEL] += correction;
@@ -76,6 +80,12 @@ void follow_wall(int distance, int dir, bool skip) {
 	//	}
 		//wait1Msec(50);
 		current_distance = SensorValue[sonar];
+
+		while(current_distance >= 60 && current_distance < 200 && skip) {
+			current_distance = SensorValue[sonar];
+		}
+		skip = false;
+		//wait1Msec(40);
 	}
 
 	//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);

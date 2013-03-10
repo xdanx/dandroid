@@ -4,16 +4,16 @@
 
 task main()
 {
-	int value = 1;
-	wait1Msec(1000);
-	nxtDisplayString(1, "Sonar : %d", OUTSIDE_OF_CUBICLE_THRESH);
+	//int value = 1;
+	//wait1Msec(1000);
+	//nxtDisplayString(1, "Sonar : %d", OUTSIDE_OF_CUBICLE_THRESH);
 
-	state_init();
+	//state_init();
 	//sonar_rotate_encod(360);
 	//wait1Msec(6000);
 	//find_cubicle_exit();
 
-	bFloatDuringInactiveMotorPWM = false;
+	//bFloatDuringInactiveMotorPWM = false;
 
 	/*
 	int left = 0;
@@ -26,8 +26,8 @@ task main()
 	//int cub = escape_cubicle();
 
 
-	droid_rotate(-180);
-	//follow_wall(21,-1);
+	//droid_rotate(-180);
+	follow_wall(20,-1, true);
 
 
 	wait1Msec(10000);
