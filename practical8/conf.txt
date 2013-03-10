@@ -1,7 +1,7 @@
 #ifndef CONF
 #define CONF
 /* constants */
-int ROTATE_90_TIME = 600; // for 100 power ; DO NOT JUST FUCK WITH THIS OK? write down power to time first, keep it somewhere safe
+int ROTATE_90_TIME = 560; // for 100 power ; DO NOT JUST FUCK WITH THIS OK? write down power to time first, keep it somewhere safe
 int ROTATE_POWER = 100;
 int MOVE_POWER = 20;
 
@@ -15,6 +15,10 @@ int SONAR_M = motorB;
 
 int SONAR_SPEED_SLOW = 10;
 int SONAR_SPEED_FAST = 50;
+
+int DEFAULT_POWER = 100;
+
+int WALL_COUNT = 20;
 
 #define MOVE_STATE 0
 #define ROTATE_STATE 1
