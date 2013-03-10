@@ -48,7 +48,7 @@ void follow_wall(int distance, int dir) {
 
 	int wheel, diff = 0, current_distance = 0, correction = 0;
 	int count = 0;
-	float k = 5;
+	float k = 2;
 
 	while(current_distance < 60 || current_distance > 75) {
 		count++;
@@ -61,10 +61,10 @@ void follow_wall(int distance, int dir) {
 			continue;
 		}
 		current_distance = SensorValue[sonar];
-		writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
-		wait1Msec(10);
-		writeDebugStream("Sensor reading: %d \n", current_distance);
-		wait1Msec(10);
+		//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
+		//wait1Msec(10);
+		//writeDebugStream("Sensor reading: %d \n", current_distance);
+		//wait1Msec(10);
 
 		//if (count%5 == 0) {
 		diff = distance - current_distance;
@@ -79,10 +79,10 @@ void follow_wall(int distance, int dir) {
 		motor[RIGHT_WHEEL] += correction;
 		motor[LEFT_WHEEL] -= correction;
 
-		writeDebugStream("Value of diff: %d , correction: %d, wheel: %d \n", diff, correction, wheel);
-		wait1Msec(10);
-		writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
-		wait1Msec(10);
+		//writeDebugStream("Value of diff: %d , correction: %d, wheel: %d \n", diff, correction, wheel);
+		//wait1Msec(10);
+		//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
+		//wait1Msec(10);
 
 	//	}
 		//wait1Msec(50);
