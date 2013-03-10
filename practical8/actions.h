@@ -99,7 +99,7 @@ void get_left_right(int* left, int* right) {
 	*left = read_sonar();
 }
 
-void escape_cubicle() {
+int escape_cubicle() {
 	writeDebugStream("---- Entering escape cubicle ---- \n");
 	find_cubicle_exit();
 	// sonar MUST be at 0 at this point
@@ -117,8 +117,11 @@ void escape_cubicle() {
 	writeDebugStream("the cub is %d\n", cub);
 	stop();
 
+	return cub;
 	//droid_rotate(90); //sync
 }
+
+
 
 
 #endif

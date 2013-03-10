@@ -23,8 +23,10 @@ task main()
 	sonar_move_at_sync(0, true);
 	*/
 
-	escape_cubicle();
-	//droid_rotate(-180);
+	//int cub = escape_cubicle();
+
+
+	droid_rotate(-180);
 	//follow_wall(21,-1);
 
 
