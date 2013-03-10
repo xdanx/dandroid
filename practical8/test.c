@@ -11,8 +11,9 @@ void enter_cubicle(int dir) {
 
 	motor[RIGHT_WHEEL] = DEFAULT_POWER;
 	motor[LEFT_WHEEL] = DEFAULT_POWER;
+	wait1Msec(200);
 	int wheel;
-	float radius = 21;
+	float radius = 20;
 	float w = 17.7;
 
 	float k = (radius - (w / 2.0))/(radius + (w / 2.0));
@@ -21,12 +22,12 @@ void enter_cubicle(int dir) {
 
 	motor[wheel] *= k;
 
-	wait1Msec(1025.65);
+	wait1Msec(1555.65);
 
 	motor[RIGHT_WHEEL] = DEFAULT_POWER;
 	motor[LEFT_WHEEL] = DEFAULT_POWER;
 
-	wait1Msec(300);
+	wait1Msec(700);
 }
 
 // dir = -1 (going east)
@@ -67,7 +68,7 @@ void follow_wall(int distance, int dir, bool skip) {
 		}
 
 		// set power of motor to turn towards wall
-		correction = (int) (k * diff);
+		correction = (int) (dir * k * diff);
 
 		motor[RIGHT_WHEEL] -= correction;
 		motor[LEFT_WHEEL] += correction;

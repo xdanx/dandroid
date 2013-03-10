@@ -27,9 +27,10 @@ task main()
 
 
 	//droid_rotate(-180);
-	follow_wall(20,-1, true);
+	follow_wall(20,-1, false);
+	enter_cubicle(-1);
 
-
+	stop();
 	wait1Msec(10000);
 	//droid_rotate(90);
 }
