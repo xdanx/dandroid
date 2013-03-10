@@ -1,0 +1,36 @@
+#ifndef CONF
+#define CONF
+/* constants */
+int ROTATE_90_TIME = 560; // for 100 power ; DO NOT JUST FUCK WITH THIS OK? write down power to time first, keep it somewhere safe
+int ROTATE_POWER = 100;
+int MOVE_POWER = 20;
+
+const float K = 0.000466; //0.00036; // for distance in cm, and time in milliseconds
+const float ENCODINGS_PER_CM = 20.525;
+const float ENCODINGS_PER_DEGREE = 3;
+
+int LEFT_WHEEL = motorA;
+int RIGHT_WHEEL = motorC;
+int SONAR_M = motorB;
+
+int SONAR_SPEED_SLOW = 10;
+int SONAR_SPEED_FAST = 50;
+
+int DEFAULT_POWER = 100;
+
+int WALL_COUNT = 20;
+
+#define MOVE_STATE 0
+#define ROTATE_STATE 1
+
+#define THETA_LOWER -180
+#define THETA_UPPER 180
+#define THETA_NORMALIZER 360
+
+#define PRINT_OFFSET_X 15
+#define PRINT_OFFSET_Y 15
+
+#define DEBUG false
+/* end constants */
+
+#endif
