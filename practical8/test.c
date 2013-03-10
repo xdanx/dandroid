@@ -48,12 +48,12 @@ void follow_wall(int distance, int dir) {
 
 	int wheel, diff = 0, current_distance = 0, correction = 0;
 	int count = 0;
-	float k = 0.85;
+	float k = 5;
 
 	while(current_distance < 60 || current_distance > 75) {
 		count++;
-		motor[RIGHT_WHEEL] = 50;
-		motor[LEFT_WHEEL] = 50;
+		motor[RIGHT_WHEEL] = 80;
+		motor[LEFT_WHEEL] = 80;
 
 		// filter garbage readings
 		if (current_distance > 75) {
@@ -69,7 +69,7 @@ void follow_wall(int distance, int dir) {
 		//if (count%5 == 0) {
 		diff = distance - current_distance;
 
-		if(abs(diff) == 2) {
+		if(abs(diff) <= 2) {
 			diff =  0;
 		}
 
@@ -85,7 +85,7 @@ void follow_wall(int distance, int dir) {
 		wait1Msec(10);
 
 	//	}
-		wait1Msec(21);
+		//wait1Msec(50);
 	}
 	//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
 	//wait1Msec(2000);
