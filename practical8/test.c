@@ -4,6 +4,7 @@
 int DEFAULT_POWER = 100;
 int LEFT_WHEEL = motorA;
 int RIGHT_WHEEL = motorC;
+int SONAR_MOTOR = motorB;
 
 /* end constants */
 
@@ -14,20 +15,13 @@ void stop() {
 	motor[RIGHT_WHEEL] = 0;
   // Now motors are synched
 	//motor[RIGHT_WHEEL] = 0;
-  wait1Msec(2000);
+  wait1Msec(500);
 }
 
 void clearDebugStats()
 {
 	//nMotorEncoder[LEFT_WHEEL] = 0;
 	//nMotorEncoder[RIGHT_WHEEL] = 0;
-}
-
-void printDebugStats()
-{
-	writeDebugStream("LEFT_WHEEL encoder: %d\n", nMotorEncoder[LEFT_WHEEL] );
-	writeDebugStream("RIGHT_WHEEL encoder: %d\n", nMotorEncoder[RIGHT_WHEEL] );
-	clearDebugStats();
 }
 
 void enter_cubicle(int dir) {
@@ -52,40 +46,61 @@ void enter_cubicle(int dir) {
 // dir = 1 (going west)
 void follow_wall(int distance, int dir) {
 
-	int wheel, diff, current_distance = 0;
+	int wheel, diff = 0, current_distance = 0, correction = 0;
+	int count = 0;
+	float k = 0.85;
 
-	float k = 1;
+	while(current_distance < 60 || current_distance > 75) {
+		count++;
+		motor[RIGHT_WHEEL] = 50;
+		motor[LEFT_WHEEL] = 50;
 
-	motor[RIGHT_WHEEL] = DEFAULT_POWER;
-	motor[LEFT_WHEEL] = DEFAULT_POWER;
-
-	while(current_distance < 60) {
-
-		current_distance = SensorValue[sonar];
-
-		writeDebugStream("Sensor reading: %d \n", current_distance);
-
-		diff = distance - current_distance;
-		if (diff < 0) {
-			wheel = (dir == -1 ? LEFT_WHEEL : RIGHT_WHEEL);
-			// set power of motor to turn towards wall
-			motor[wheel] -= (int) (- k * diff);
-			writeDebugStream("Value of diff: %f \n", diff);
-			writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
-
-		} else {
-			wheel = (dir == -1 ? RIGHT_WHEEL : LEFT_WHEEL);
-			motor[wheel] -= (int) (- k * diff);
+		// filter garbage readings
+		if (current_distance > 75) {
+			current_distance = SensorValue[sonar];
+			continue;
 		}
-		wait1Msec(30);
+		current_distance = SensorValue[sonar];
+		writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
+		wait1Msec(10);
+		writeDebugStream("Sensor reading: %d \n", current_distance);
+		wait1Msec(10);
+
+		//if (count%5 == 0) {
+		diff = distance - current_distance;
+
+		if(abs(diff) == 2) {
+			diff =  0;
+		}
+
+		// set power of motor to turn towards wall
+		correction = (int) (-k * diff);
+
+		motor[RIGHT_WHEEL] += correction;
+		motor[LEFT_WHEEL] -= correction;
+
+		writeDebugStream("Value of diff: %d , correction: %d, wheel: %d \n", diff, correction, wheel);
+		wait1Msec(10);
+		writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
+		wait1Msec(10);
+
+	//	}
+		wait1Msec(21);
 	}
+	//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
+	//wait1Msec(2000);
 
 }
 
 
 task main()
 {
+
+	clearDebugStream();
 	follow_wall(21, -1);
-	enter_cubicle(-1);
+	//enter_cubicle(-1);
+	//motor[LEFT_WHEEL] = 90;
+	//motor[RIGHT_WHEEL] = 98;
+	//wait1Msec(300);
 	stop();
 }
