@@ -4,6 +4,7 @@
 #include "conf.txt"
 #include "space.h"
 #include "robot_state.h"
+#include "logic.h"
 int WALL_COUNT = 20;
 
 // distances
@@ -80,14 +81,28 @@ void step_out_of_cubicle() {
 
 // PRE: sonar pointing forward
 void get_left_right(int* left, int* right) {
-	sonar_move_at_sync(90, false);
+	sonar_move_at_sync(90, false); //this turns it to the right
 	nxtDisplayString(1, "Rotation : %d", nMotorEncoder[SONAR_M]);
 	wait1Msec(100);
 	*right = read_sonar();
-	sonar_move_at_sync(-90, false);
+	sonar_move_at_sync(-90, false); //this turns it to the left
 	nxtDisplayString(1, "Rotation : %d", nMotorEncoder[SONAR_M]);
 	wait1Msec(100);
 	*left = read_sonar();
+}
+
+void escape_cubicle() {
+	find_cubicle_exit();
+	// sonar MUST be at 0 at this point
+	step_out_of_cubicle();
+	// still moving at this point !!
+	int left, right;
+	get_left_right(&left, &right);
+	// look forward quickly and stop so you don't bump into the wall !!!
+	sonar_move_at_sync(0, false);
+	while (read_sonar() > TUNNEL_WIDTH / 2) {/*wait for it ...*/}
+	stop();
+	//droid_rotate(90); //sync
 }
 
 
