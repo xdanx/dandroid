@@ -31,11 +31,13 @@ void enter_cubicle(int dir) {
 
 // dir = -1 (going east)
 // dir = 1 (going west)
-void follow_wall(int distance, int dir) {
+void follow_wall(int distance, int dir, bool skip) {
 
 	int wheel, diff = 0, current_distance = 0, correction = 0;
 	int count = 0;
 	float k = 1.2;
+
+	current_distance = SensorValue[sonar];
 
 	while(current_distance < 60 || current_distance > 200) {
 		count++;
@@ -47,7 +49,7 @@ void follow_wall(int distance, int dir) {
 			current_distance = SensorValue[sonar];
 			continue;
 		}
-		current_distance = SensorValue[sonar];
+
 		writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
 		//wait1Msec(10);
 		writeDebugStream("Sensor reading: %d \n", current_distance);
@@ -73,7 +75,9 @@ void follow_wall(int distance, int dir) {
 
 	//	}
 		//wait1Msec(50);
+		current_distance = SensorValue[sonar];
 	}
+
 	//writeDebugStream("Wheel %d, motor 1: %d, motor 2: %d \n", wheel, motor[RIGHT_WHEEL], motor[LEFT_WHEEL]);
 	//wait1Msec(2000);
 
